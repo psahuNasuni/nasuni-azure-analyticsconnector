@@ -95,10 +95,9 @@ output "function_app_default_hostname" {
   value = azurerm_function_app.function_app.default_hostname
 }
 
-
 data "azurerm_key_vault" "acs_key_vault" {
-  name                = "nasuniacssecretstore"
-  resource_group_name = "nasuni-acs-resources4"
+  name                = var.acs_key_vault
+  resource_group_name = var.acs_resource_group
 }
 
 resource "azurerm_key_vault_secret" "search-endpoint" {
