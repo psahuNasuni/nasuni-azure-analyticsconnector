@@ -21,7 +21,7 @@ resource "azurerm_resource_group" "resource_group" {
 ###### Integration of azure function with cognitive search ###############
 
 resource "azurerm_storage_account" "storage_account" {
-  name                     = "${var.acs_resource_group}st"
+  name                     = "nasuninacsta"
   resource_group_name      = azurerm_resource_group.resource_group.name
   location                 = azurerm_resource_group.resource_group.location
   account_tier             = "Standard"
