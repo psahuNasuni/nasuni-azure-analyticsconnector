@@ -14,7 +14,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     acs_api_key = "acs-api-key"
     nmc_api_acs_url = "nmc-api-acs-url"
-    datasource_Connection_String = "datasource-Connection-String"
+    datasource_connection_string = "datasource-connection-string"
     destination_container_name = "destination-container-name"
     name = req.params.get("name")
     if not name:
@@ -35,7 +35,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         client = SecretClient(vault_url=key_valut_url, credential=credential)
         acs_api_key = client.get_secret(acs_api_key)
         nmc_api_acs_url = client.get_secret(nmc_api_acs_url)
-        datasource_Connection_String = client.get_secret(datasource_Connection_String)
+        datasource_connection_string = client.get_secret(datasource_connection_string)
         destination_container_name = client.get_secret(destination_container_name)
 
         # return func.HttpResponse(f"API Key :  {retrieved_secret.value}!")
@@ -57,7 +57,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         }
         logging.info("Create a data source")
         # Create a data source
-        datasourceConnectionString = datasource_Connection_String.value
+        datasourceConnectionString = datasource_connection_string.value
         datasource_payload = {
             "name": datasource_name,
             "description": "Demo files to demonstrate cognitive search capabilities.",
