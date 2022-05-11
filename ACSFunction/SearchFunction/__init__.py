@@ -1,3 +1,4 @@
+import os
 import logging
 import json
 import requests
@@ -8,7 +9,7 @@ from azure.keyvault.secrets import SecretClient
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
 
-    key_valut = "nasuniacssecretstore"
+    key_valut = os.environ["AZURE_KEY_VAULT"]
     key_valut_url = f"https://{key_valut}.vault.azure.net/"
 
     acs_api_key = "acs-api-key"

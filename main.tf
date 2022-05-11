@@ -13,8 +13,8 @@ data "archive_file" "test" {
 
 
 resource "azurerm_resource_group" "resource_group" {
-  name     = "${var.acs_resource_group}"
-  location = "eastus"
+  name     = var.acs_resource_group
+  location = var.azure_location
 }
 
 
