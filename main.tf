@@ -11,6 +11,9 @@ data "archive_file" "test" {
   output_path = var.output_path
 }
 
+resource "random_id" "nac_unique_stack_id" {
+  byte_length = 6
+}
 
 resource "azurerm_resource_group" "resource_group" {
   name     = var.acs_resource_group
@@ -21,7 +24,7 @@ resource "azurerm_resource_group" "resource_group" {
 ###### Integration of azure function with cognitive search ###############
 
 resource "azurerm_storage_account" "storage_account" {
-  name                     = "nasuninacsta"
+  name                     = "nasunist${random_id.nac_unique_stack_id.hex}"
   resource_group_name      = azurerm_resource_group.resource_group.name
   location                 = azurerm_resource_group.resource_group.location
   account_tier             = "Standard"
@@ -30,7 +33,7 @@ resource "azurerm_storage_account" "storage_account" {
 }
 
 resource "azurerm_application_insights" "app_insights" {
-  name                = "${var.acs_resource_group}app-insights"
+  name                = "nasuni-app-insights-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
   application_type    = "web"
@@ -38,7 +41,7 @@ resource "azurerm_application_insights" "app_insights" {
 
 
 resource "azurerm_app_service_plan" "app_service_plan" {
-  name                = "${var.acs_resource_group}-app-service-plan"
+  name                = "nasuni-app-service-plan-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
   kind                = "FunctionApp"
@@ -51,7 +54,7 @@ resource "azurerm_app_service_plan" "app_service_plan" {
 
 
 resource "azurerm_function_app" "function_app" {
-  name                = "${var.acs_resource_group}-function-app"
+  name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
   app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
