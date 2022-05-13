@@ -94,9 +94,6 @@ resource "null_resource" "function_app_publish" {
   }
 }
 
-output "function_app_default_hostname" {
-  value = azurerm_function_app.function_app.default_hostname
-}
 
 data "azurerm_key_vault" "acs_key_vault" {
   name                = var.acs_key_vault
@@ -113,4 +110,8 @@ resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
     command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${data.azurerm_key_vault.acs_key_vault.name}"
   }
+}
+
+output "FunctionAppSearchURL" {
+  value = "https://${azurerm_function_app.function_app.default_hostname}/api/SearchFunction"
 }
