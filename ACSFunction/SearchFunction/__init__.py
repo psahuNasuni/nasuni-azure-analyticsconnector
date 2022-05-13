@@ -8,14 +8,16 @@ from azure.keyvault.secrets import SecretClient
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
-
+    # Extract Key Vault name 
     key_valut = os.environ["AZURE_KEY_VAULT"]
     key_valut_url = f"https://{key_valut}.vault.azure.net/"
 
+    # Set the Azure Cognitive Search Variables
     acs_api_key = "acs-api-key"
     nmc_api_acs_url = "nmc-api-acs-url"
     datasource_connection_string = "datasource-connection-string"
     destination_container_name = "destination-container-name"
+
     name = req.params.get("name")
     if not name:
         try:
@@ -26,26 +28,22 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             name = req_body.get("name")
 
     if not name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
+        return func.HttpResponse(f"Search Query is empty, {name}")
     else:
-        ###### Testing azure keyvalut
-        logging.info('Fetching Default credentials.')
+        logging.info('Fetching Default credentials')
         credential = DefaultAzureCredential()
-        #credential=ManagedIdentityCredential()
         client = SecretClient(vault_url=key_valut_url, credential=credential)
+        logging.info('Fetching Secretes from Azure Key Vault')
         acs_api_key = client.get_secret(acs_api_key)
         nmc_api_acs_url = client.get_secret(nmc_api_acs_url)
         datasource_connection_string = client.get_secret(datasource_connection_string)
         destination_container_name = client.get_secret(destination_container_name)
-
-        # return func.HttpResponse(f"API Key :  {retrieved_secret.value}!")
 
         # Define the names for the data source, skillset, index and indexer
         datasource_name = "datasource"
         skillset_name = "skillset"
         index_name = "index"
         indexer_name = "indexer"
-
 
         logging.info('Setting the endpoint')
         # Setup the endpoint
@@ -160,9 +158,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/skillsets/" + skillset_name,
                         data=json.dumps(skillset_payload), headers=headers, params=params)
-        print(r.status_code)
-
         logging.info("Skill set completed: ")
+
         logging.info("Creating Index setup")
         # Create an index
         index_payload = {
@@ -212,8 +209,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/indexes/" + index_name,
                         data=json.dumps(index_payload), headers=headers, params=params)
-        print(r.status_code)
         logging.info("Indexes setup completed: ")
+
         logging.info("Creating Indexer setup")
         # Create an indexer
         indexer_payload = {
@@ -262,40 +259,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/indexers/" + indexer_name,
                         data=json.dumps(indexer_payload), headers=headers, params=params)
-        print(r.status_code)
         logging.info("Indexer setup completed: ")
-
-        # # # Get indexer status
-        # # r = requests.get(endpoint + "/indexers/" + indexer_name +
-        # #                 "/status", headers=headers, params=params)
-        # # pprint(json.dumps(r.json(), indent=1))
-
-        # # # Query the service for the index definition
-        # # r = requests.get(endpoint + "/indexes/" + index_name,
-        # #                 headers=headers, params=params)
-        # # pprint(json.dumps(r.json(), indent=1))
-
-
-        # # # Query the index to return the contents of organizations
-        # # r = requests.get(endpoint + "/indexes/" + index_name +
-        # #                 "/docs?&search=*", headers=headers, params=params)
-        # # pprint(json.dumps(r.json(), indent=1))
 
         logging.info("Searching URl")
         if name == '*':
             r = requests.get(endpoint + "/indexes/" + index_name +
                  "/docs?&search=*", headers=headers, params=params)
-            #pprint(json.dumps(r.json(), indent=1))
         else:
-            # Query the index to return the contents of organizations
+            # Query the index to return the contents
             r = requests.get(endpoint + "/indexes/" + index_name +
                             "/docs?&search="+ name + '"', headers=headers, params=params)
-            #pprint(json.dumps(r.json(), indent=1))
 
         logging.info("Search URl setup completed: ")
-        # Set search value in key valult
-        #search_url = endpoint + "/indexes/" + index_name + "/docs?&search="+ name + '"'
-        #nmc_api_acs_url = client.set_secret("search-endpoint", search_url)
 
         return func.HttpResponse(
              json.dumps(r.json(), indent=1),

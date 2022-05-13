@@ -1,8 +1,8 @@
- resource "null_resource" "provision_nac" {
-   provisioner "local-exec" {
-      command = "sh prov-nac.sh"
-   }  
- }
+resource "null_resource" "provision_nac" {
+  provisioner "local-exec" {
+    command = "sh prov-nac.sh"
+  }
+}
 
 
 data "archive_file" "test" {
@@ -80,16 +80,16 @@ resource "azurerm_function_app" "function_app" {
 }
 
 locals {
-    publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.function_app.name} --src ${var.output_path}"
+  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.function_app.name} --src ${var.output_path}"
 }
 
 resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
     command = local.publish_code_command
   }
-  depends_on = [ azurerm_function_app.function_app, local.publish_code_command]
+  depends_on = [azurerm_function_app.function_app, local.publish_code_command]
   triggers = {
-    input_json = filemd5(var.output_path)
+    input_json           = filemd5(var.output_path)
     publish_code_command = local.publish_code_command
   }
 }
