@@ -106,6 +106,19 @@ resource "azurerm_key_vault_secret" "search-endpoint" {
   key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
+resource "azurerm_key_vault_secret" "web-access-appliance-address" {
+  name         = "web-access-appliance-address"
+  value        = var.web_access_appliance_address
+  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+}
+
+resource "azurerm_key_vault_secret" "nmc-volume-name" {
+  name         = "nmc-volume-name"
+  value        = var.nmc_volume_name
+  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+}
+
+
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
     command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${data.azurerm_key_vault.acs_key_vault.name}"
