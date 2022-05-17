@@ -313,7 +313,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         logging.info("Search URl setup completed: ")
 
         logging.info("##################################################")
-        r = generateFileUrl(r, access_url)
+        # r = generateFileUrl(r, access_url)
 
         logging.info("##################################################")
         return func.HttpResponse(
