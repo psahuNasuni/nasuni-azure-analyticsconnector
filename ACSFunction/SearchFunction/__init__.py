@@ -6,16 +6,37 @@ import azure.functions as func
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
+def generateFileUrl(response, access_url):
+    """
+    Update the File URL in Response
+    """
+    updated_values = []
+    response = json.loads(response)
+    extract = lambda x: access_url + x["File_Location"].split("\\")[-1]
+    for recordes in response['value']:
+        recordes["File_Location"] = extract(recordes)
+        updated_values.append(recordes)
+
+    updated_values = {"value": updated_values}
+    response.update(updated_values)
+    return response
+
+
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
-
+    # Extract Key Vault name 
     key_valut = os.environ["AZURE_KEY_VAULT"]
     key_valut_url = f"https://{key_valut}.vault.azure.net/"
 
+    # Set the Azure Cognitive Search Variables
     acs_api_key = "acs-api-key"
     nmc_api_acs_url = "nmc-api-acs-url"
     datasource_connection_string = "datasource-connection-string"
     destination_container_name = "destination-container-name"
+
+    web_access_appliance_address = "web-access-appliance-address"
+    nmc_volume_name = "nmc-volume-name"
+
     name = req.params.get("name")
     if not name:
         try:
@@ -26,26 +47,28 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             name = req_body.get("name")
 
     if not name:
-        return func.HttpResponse(f"Hello, {name}. This HTTP triggered function executed successfully.")
+        return func.HttpResponse(f"Search Query is empty, {name}")
     else:
-        ###### Testing azure keyvalut
-        logging.info('Fetching Default credentials.')
+        logging.info('Fetching Default credentials')
         credential = DefaultAzureCredential()
-        #credential=ManagedIdentityCredential()
         client = SecretClient(vault_url=key_valut_url, credential=credential)
+        logging.info('Fetching Secretes from Azure Key Vault')
         acs_api_key = client.get_secret(acs_api_key)
         nmc_api_acs_url = client.get_secret(nmc_api_acs_url)
         datasource_connection_string = client.get_secret(datasource_connection_string)
         destination_container_name = client.get_secret(destination_container_name)
 
-        # return func.HttpResponse(f"API Key :  {retrieved_secret.value}!")
+        # Construct the access_url
+        web_access_appliance_address = client.get_secret(web_access_appliance_address)
+        nmc_volume_name = client.get_secret(nmc_volume_name)
+
+        access_url = "https//" + web_access_appliance_address.value + "/fs/view/" + nmc_volume_name.value + "/" 
 
         # Define the names for the data source, skillset, index and indexer
         datasource_name = "datasource"
         skillset_name = "skillset"
         index_name = "index"
         indexer_name = "indexer"
-
 
         logging.info('Setting the endpoint')
         # Setup the endpoint
@@ -160,9 +183,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/skillsets/" + skillset_name,
                         data=json.dumps(skillset_payload), headers=headers, params=params)
-        print(r.status_code)
-
         logging.info("Skill set completed: ")
+
         logging.info("Creating Index setup")
         # Create an index
         index_payload = {
@@ -186,34 +208,39 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "facetable": "false"
                 },
                 {
-                    "name": "languageCode",
+                    "name": "File_Location",
                     "type": "Edm.String",
                     "searchable": "true",
                     "filterable": "false",
-                    "facetable": "false"
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
                 },
                 {
-                    "name": "keyPhrases",
-                    "type": "Collection(Edm.String)",
-                    "searchable": "true",
+                    "name": "TOC_Handle",
+                    "type": "Edm.String",
+                    "searchable": "false",
                     "filterable": "false",
-                    "facetable": "false"
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
                 },
                 {
-                    "name": "organizations",
-                    "type": "Collection(Edm.String)",
-                    "searchable": "true",
-                    "sortable": "false",
+                    "name": "Volume_Name",
+                    "type": "Edm.String",
+                    "searchable": "false",
                     "filterable": "false",
-                    "facetable": "false"
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
                 }
             ]
         }
 
         r = requests.put(endpoint + "/indexes/" + index_name,
                         data=json.dumps(index_payload), headers=headers, params=params)
-        print(r.status_code)
         logging.info("Indexes setup completed: ")
+
         logging.info("Creating Indexer setup")
         # Create an indexer
         indexer_payload = {
@@ -231,6 +258,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 {
                     "sourceFieldName": "content",
                     "targetFieldName": "content"
+                },
+                {
+                    "sourceFieldName": "metadata_storage_name",
+                    "targetFieldName": "File_Location"
                 }
             ],
             "outputFieldMappings":
@@ -247,6 +278,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "sourceFieldName": "/document/languageCode",
                     "targetFieldName": "languageCode"
                 }
+
             ],
             "parameters":
             {
@@ -262,43 +294,28 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/indexers/" + indexer_name,
                         data=json.dumps(indexer_payload), headers=headers, params=params)
-        print(r.status_code)
         logging.info("Indexer setup completed: ")
-
-        # # # Get indexer status
-        # # r = requests.get(endpoint + "/indexers/" + indexer_name +
-        # #                 "/status", headers=headers, params=params)
-        # # pprint(json.dumps(r.json(), indent=1))
-
-        # # # Query the service for the index definition
-        # # r = requests.get(endpoint + "/indexes/" + index_name,
-        # #                 headers=headers, params=params)
-        # # pprint(json.dumps(r.json(), indent=1))
-
-
-        # # # Query the index to return the contents of organizations
-        # # r = requests.get(endpoint + "/indexes/" + index_name +
-        # #                 "/docs?&search=*", headers=headers, params=params)
-        # # pprint(json.dumps(r.json(), indent=1))
 
         logging.info("Searching URl")
         if name == '*':
             r = requests.get(endpoint + "/indexes/" + index_name +
                  "/docs?&search=*", headers=headers, params=params)
-            #pprint(json.dumps(r.json(), indent=1))
         else:
-            # Query the index to return the contents of organizations
+            # Query the index to return the contents
             r = requests.get(endpoint + "/indexes/" + index_name +
                             "/docs?&search="+ name + '"', headers=headers, params=params)
-            #pprint(json.dumps(r.json(), indent=1))
+        
 
+        logging.info("##################################################")
+        logging.info(f"Generated File URL Response Tyep :{type(r)}")
+        logging.info(f"Generated File URL Response:{r}")       
         logging.info("Search URl setup completed: ")
-        # Set search value in key valult
-        #search_url = endpoint + "/indexes/" + index_name + "/docs?&search="+ name + '"'
-        #nmc_api_acs_url = client.set_secret("search-endpoint", search_url)
 
+        logging.info("##################################################")
+        r = generateFileUrl(r, access_url)
+
+        logging.info("##################################################")
         return func.HttpResponse(
              json.dumps(r.json(), indent=1),
              status_code=200
         )
-
