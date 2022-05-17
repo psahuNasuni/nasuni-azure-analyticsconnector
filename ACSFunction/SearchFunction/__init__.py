@@ -10,8 +10,9 @@ def generateFileUrl(response, access_url):
     """
     Update the File URL in Response
     """
+    logger.info(f"{respone}")
     updated_values = []
-    response = json.loads(response)
+    response = json.loads(response.text)
     extract = lambda x: access_url + x["File_Location"].split("\\")[-1]
     for recordes in response['value']:
         recordes["File_Location"] = extract(recordes)
