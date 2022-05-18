@@ -6,17 +6,17 @@ import azure.functions as func
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
+
 def generateFileUrl(response, access_url):
     """
     Update the File URL in Response
     """
     updated_values = []
-    response = json.loads(response)
+    response = json.loads(response.text)
     extract = lambda x: access_url + x["File_Location"].split("\\")[-1]
     for recordes in response['value']:
         recordes["File_Location"] = extract(recordes)
         updated_values.append(recordes)
-
     updated_values = {"value": updated_values}
     response.update(updated_values)
     return response
@@ -62,7 +62,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         web_access_appliance_address = client.get_secret(web_access_appliance_address)
         nmc_volume_name = client.get_secret(nmc_volume_name)
 
-        access_url = "https//" + web_access_appliance_address.value + "/fs/view/" + nmc_volume_name.value + "/" 
+        access_url = "https://" + web_access_appliance_address.value + "/fs/view/" + nmc_volume_name.value + "/" 
 
         # Define the names for the data source, skillset, index and indexer
         datasource_name = "datasource"
@@ -119,18 +119,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         {
                             "name": "organizations",
                             "targetName": "organizations"
-                        },
-                        {
-                            "name": "File_Location",
-                            "targetName": "File_Location"
-                        },
-                        {
-                            "name": "TOC_Handle",
-                            "targetName": "TOC_Handle"
-                        },
-                        {
-                            "name": "Volume_Name",
-                            "targetName": "Volume_Name"
                         }
 
                     ]
@@ -314,10 +302,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "targetFieldName": "languageCode"
                 },
                 {
-                    "sourceFieldName": "metadata_storage_name",
-                    "targetFieldName": "File_Location"
-                },
-                {
                     "sourceFieldName": "/document/languageCode",
                     "targetFieldName": "TOC_Handle"
                 },
@@ -353,12 +337,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             r = requests.get(endpoint + "/indexes/" + index_name +
                             "/docs?&search="+ name + '"', headers=headers, params=params)
         
-
-        logging.info(f'Search Result : {r}')
-        logging.info("##################################################")
-        #r = generateFileUrl(r, access_url)
-        logging.info("##################################################")
+        r = generateFileUrl(r, access_url)
+        
         return func.HttpResponse(
-             json.dumps(r.json(), indent=1),
+             json.dumps(r, indent=1),
              status_code=200
         )
