@@ -119,7 +119,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                         {
                             "name": "organizations",
                             "targetName": "organizations"
+                        },
+                        {
+                            "name": "File_Location",
+                            "targetName": "File_Location"
+                        },
+                        {
+                            "name": "TOC_Handle",
+                            "targetName": "TOC_Handle"
+                        },
+                        {
+                            "name": "Volume_Name",
+                            "targetName": "Volume_Name"
                         }
+
                     ]
                 },
                 {
@@ -208,6 +221,28 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "facetable": "false"
                 },
                 {
+                    "name": "languageCode",
+                    "type": "Edm.String",
+                    "searchable": "true",
+                    "filterable": "false",
+                    "facetable": "false"
+                },
+                {
+                    "name": "keyPhrases",
+                    "type": "Collection(Edm.String)",
+                    "searchable": "true",
+                    "filterable": "false",
+                    "facetable": "false"
+                },
+                {
+                    "name": "organizations",
+                    "type": "Collection(Edm.String)",
+                    "searchable": "true",
+                    "sortable": "false",
+                    "filterable": "false",
+                    "facetable": "false"
+                },
+                {
                     "name": "File_Location",
                     "type": "Edm.String",
                     "searchable": "true",
@@ -277,8 +312,21 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 {
                     "sourceFieldName": "/document/languageCode",
                     "targetFieldName": "languageCode"
+                },
+                {
+                    "sourceFieldName": "metadata_storage_name",
+                    "targetFieldName": "File_Location"
+                },
+                {
+                    "sourceFieldName": "/document/languageCode",
+                    "targetFieldName": "TOC_Handle"
+                },
+                {
+                    "sourceFieldName": "/document/languageCode",
+                    "targetFieldName": "Volume_Name"
                 }
 
+                                
             ],
             "parameters":
             {
@@ -294,8 +342,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/indexers/" + indexer_name,
                         data=json.dumps(indexer_payload), headers=headers, params=params)
-        logging.info("Indexer setup completed: ")
 
+        logging.info("Indexer setup completed: ")
         logging.info("Searching URl")
         if name == '*':
             r = requests.get(endpoint + "/indexes/" + index_name +
@@ -306,14 +354,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             "/docs?&search="+ name + '"', headers=headers, params=params)
         
 
+        logging.info(f'Search Result : {r}')
         logging.info("##################################################")
-        logging.info(f"Generated File URL Response Tyep :{type(r)}")
-        logging.info(f"Generated File URL Response:{r}")       
-        logging.info("Search URl setup completed: ")
-
-        logging.info("##################################################")
-        r = generateFileUrl(r, access_url)
-
+        #r = generateFileUrl(r, access_url)
         logging.info("##################################################")
         return func.HttpResponse(
              json.dumps(r.json(), indent=1),
