@@ -7,7 +7,7 @@ from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
 
-def generateFileUrl(response, access_url):
+def generateResponse(response, access_url, unifs_toc_handle, nmc_volume_name):
     """
     Update the File URL in Response
     """
@@ -16,6 +16,8 @@ def generateFileUrl(response, access_url):
     extract = lambda x: access_url + x["File_Location"].split("\\")[-1]
     for recordes in response['value']:
         recordes["File_Location"] = extract(recordes)
+        recordes["TOC_Handle"] = unifs_toc_handle
+        recordes["Volume_Name"] = nmc_volume_name
         updated_values.append(recordes)
     updated_values = {"value": updated_values}
     response.update(updated_values)
@@ -36,6 +38,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     web_access_appliance_address = "web-access-appliance-address"
     nmc_volume_name = "nmc-volume-name"
+    unifs_toc_handle = "unifs-toc-handle"
 
     name = req.params.get("name")
     if not name:
@@ -61,6 +64,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Construct the access_url
         web_access_appliance_address = client.get_secret(web_access_appliance_address)
         nmc_volume_name = client.get_secret(nmc_volume_name)
+        unifs_toc_handle = client.get_secret(unifs_toc_handle)
 
         access_url = "https://" + web_access_appliance_address.value + "/fs/view/" + nmc_volume_name.value + "/" 
 
@@ -337,7 +341,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             r = requests.get(endpoint + "/indexes/" + index_name +
                             "/docs?&search="+ name + '"', headers=headers, params=params)
         
-        r = generateFileUrl(r, access_url)
+        r = generateResponse(r, access_url, unifs_toc_handle.value, nmc_volume_name.value)
         
         return func.HttpResponse(
              json.dumps(r, indent=1),
