@@ -13,9 +13,9 @@ def generateResponse(response, access_url, unifs_toc_handle, nmc_volume_name):
     """
     updated_values = []
     response = json.loads(response.text)
-    extract = lambda x: access_url + x["File_Location"].split("\\")[-1]
+    extract = lambda x: access_url + x["access_url"].split("\\")[-1]
     for recordes in response['value']:
-        recordes["File_Location"] = extract(recordes)
+        recordes["access_url"] = extract(recordes)
         recordes["TOC_Handle"] = unifs_toc_handle
         recordes["Volume_Name"] = nmc_volume_name
         updated_values.append(recordes)
@@ -235,7 +235,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "facetable": "false"
                 },
                 {
-                    "name": "File_Location",
+                    "name": "access_url",
                     "type": "Edm.String",
                     "searchable": "true",
                     "filterable": "false",
@@ -288,7 +288,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 },
                 {
                     "sourceFieldName": "metadata_storage_name",
-                    "targetFieldName": "File_Location"
+                    "targetFieldName": "access_url"
                 }
             ],
             "outputFieldMappings":
