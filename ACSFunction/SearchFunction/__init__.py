@@ -6,16 +6,18 @@ import azure.functions as func
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-def generateFileUrl(response, access_url):
+def generateResponse(response, access_url, unifs_toc_handle, nmc_volume_name):
     """
     Update the File URL in Response
     """
     updated_values = []
+    response = json.loads(response.text)
     extract = lambda x: access_url + x["File_Location"].split("\\")[-1]
     for recordes in response['value']:
         recordes["File_Location"] = extract(recordes)
+        recordes["TOC_Handle"] = unifs_toc_handle
+        recordes["Volume_Name"] = nmc_volume_name
         updated_values.append(recordes)
-
     updated_values = {"value": updated_values}
     response.update(updated_values)
     return response
@@ -35,6 +37,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     web_access_appliance_address = "web-access-appliance-address"
     nmc_volume_name = "nmc-volume-name"
+    unifs_toc_handle = "unifs-toc-handle"
 
     name = req.params.get("name")
     if not name:
@@ -60,8 +63,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         # Construct the access_url
         web_access_appliance_address = client.get_secret(web_access_appliance_address)
         nmc_volume_name = client.get_secret(nmc_volume_name)
+        unifs_toc_handle = client.get_secret(unifs_toc_handle)
 
-        access_url = "https//" + web_access_appliance_address.value + "/fs/view/" + nmc_volume_name.value + "/" 
+        access_url = "https://" + web_access_appliance_address.value + "/fs/view/" + nmc_volume_name.value + "/" 
 
         # Define the names for the data source, skillset, index and indexer
         datasource_name = "datasource"
@@ -119,6 +123,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             "name": "organizations",
                             "targetName": "organizations"
                         }
+
                     ]
                 },
                 {
@@ -229,6 +234,31 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "type": "Edm.String",
                     "searchable": "false",
                     "filterable": "false",
+                    "facetable": "false"
+                },
+                {
+                    "name": "File_Location",
+                    "type": "Edm.String",
+                    "searchable": "true",
+                    "filterable": "false",
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
+                },
+                {
+                    "name": "TOC_Handle",
+                    "type": "Edm.String",
+                    "searchable": "false",
+                    "filterable": "false",
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
+                },
+                {
+                    "name": "Volume_Name",
+                    "type": "Edm.String",
+                    "searchable": "false",
+                    "filterable": "false",
                     "facetable": "false",
                     "retrievable": "true",
                     "sortable": "true"
@@ -276,8 +306,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 {
                     "sourceFieldName": "/document/languageCode",
                     "targetFieldName": "languageCode"
+                },
+                {
+                    "sourceFieldName": "/document/languageCode",
+                    "targetFieldName": "TOC_Handle"
+                },
+                {
+                    "sourceFieldName": "/document/languageCode",
+                    "targetFieldName": "Volume_Name"
                 }
-
             ],
             "parameters":
             {
@@ -293,8 +330,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         r = requests.put(endpoint + "/indexers/" + indexer_name,
                         data=json.dumps(indexer_payload), headers=headers, params=params)
-        logging.info("Indexer setup completed: ")
 
+        logging.info("Indexer setup completed: ")
         logging.info("Searching URl")
         if name == '*':
             r = requests.get(endpoint + "/indexes/" + index_name +
@@ -304,12 +341,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             r = requests.get(endpoint + "/indexes/" + index_name +
                             "/docs?&search="+ name + '"', headers=headers, params=params)
         
-        r = generateFileUrl(r, access_url)
-       
-        logging.info("Search URl setup completed: ")
-
+        r = generateResponse(r, access_url, unifs_toc_handle.value, nmc_volume_name.value)
         return func.HttpResponse(
-             json.dumps(r.json(), indent=1),
+             json.dumps(r, indent=1),
              status_code=200
         )
-

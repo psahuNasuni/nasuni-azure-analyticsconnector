@@ -118,6 +118,12 @@ resource "azurerm_key_vault_secret" "nmc-volume-name" {
   key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
+resource "azurerm_key_vault_secret" "unifs-toc-handle" {
+  name         = "unifs-toc-handle"
+  value        = var.unifs_toc_handle
+  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+}
+
 
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {

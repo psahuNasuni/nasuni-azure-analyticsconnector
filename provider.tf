@@ -1,4 +1,3 @@
-
 # Configure the Microsoft Azure Provider
 terraform {
   required_providers {
