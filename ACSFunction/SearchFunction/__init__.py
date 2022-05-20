@@ -6,7 +6,6 @@ import azure.functions as func
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-
 def generateResponse(response, access_url, unifs_toc_handle, nmc_volume_name):
     """
     Update the File URL in Response
@@ -213,24 +212,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "facetable": "false"
                 },
                 {
-                    "name": "languageCode",
+                    "name": "File_Location",
                     "type": "Edm.String",
                     "searchable": "true",
                     "filterable": "false",
-                    "facetable": "false"
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
                 },
                 {
-                    "name": "keyPhrases",
-                    "type": "Collection(Edm.String)",
-                    "searchable": "true",
+                    "name": "TOC_Handle",
+                    "type": "Edm.String",
+                    "searchable": "false",
                     "filterable": "false",
-                    "facetable": "false"
+                    "facetable": "false",
+                    "retrievable": "true",
+                    "sortable": "true"
                 },
                 {
-                    "name": "organizations",
-                    "type": "Collection(Edm.String)",
-                    "searchable": "true",
-                    "sortable": "false",
+                    "name": "Volume_Name",
+                    "type": "Edm.String",
+                    "searchable": "false",
                     "filterable": "false",
                     "facetable": "false"
                 },
@@ -313,8 +315,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "sourceFieldName": "/document/languageCode",
                     "targetFieldName": "Volume_Name"
                 }
-
-                                
             ],
             "parameters":
             {
@@ -342,7 +342,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                             "/docs?&search="+ name + '"', headers=headers, params=params)
         
         r = generateResponse(r, access_url, unifs_toc_handle.value, nmc_volume_name.value)
-        
         return func.HttpResponse(
              json.dumps(r, indent=1),
              status_code=200
