@@ -6,7 +6,6 @@ import azure.functions as func
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
-
 def generateResponse(response, access_url, unifs_toc_handle, nmc_volume_name):
     """
     Update the File URL in Response
@@ -257,9 +256,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "type": "Edm.String",
                     "searchable": "false",
                     "filterable": "false",
-                    "facetable": "false",
-                    "retrievable": "true",
-                    "sortable": "true"
+                    "facetable": "false"
                 }
             ]
         }
@@ -313,7 +310,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                     "sourceFieldName": "/document/languageCode",
                     "targetFieldName": "Volume_Name"
                 }
-
             ],
             "parameters":
             {
@@ -339,6 +335,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             # Query the index to return the contents
             r = requests.get(endpoint + "/indexes/" + index_name +
                             "/docs?&search="+ name + '"', headers=headers, params=params)
+
         r = generateResponse(r, access_url, unifs_toc_handle.value, nmc_volume_name.value)
         return func.HttpResponse(
              json.dumps(r, indent=1),
