@@ -65,6 +65,9 @@ resource "azurerm_function_app" "function_app" {
     "https_only"                     = "true",
     "APPINSIGHTS_INSTRUMENTATIONKEY" = "${azurerm_application_insights.app_insights.instrumentation_key}"
   }
+  identity {
+    type = "SystemAssigned"
+  }
   os_type = "linux"
   site_config {
     linux_fx_version          = "Python|3.9"
