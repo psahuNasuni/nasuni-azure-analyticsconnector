@@ -1,9 +1,10 @@
+data "azurerm_client_config" "current" {}
+
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
     command = "sh prov-nac.sh"
   }
 }
-
 
 data "archive_file" "test" {
   type        = "zip"
@@ -19,7 +20,6 @@ resource "azurerm_resource_group" "resource_group" {
   name     = var.acs_resource_group
   location = var.azure_location
 }
-
 
 ###### Integration of azure function with cognitive search ###############
 
@@ -51,7 +51,6 @@ resource "azurerm_app_service_plan" "app_service_plan" {
     size = "Y1"
   }
 }
-
 
 resource "azurerm_function_app" "function_app" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
@@ -97,10 +96,27 @@ resource "null_resource" "function_app_publish" {
   }
 }
 
-
 data "azurerm_key_vault" "acs_key_vault" {
   name                = var.acs_key_vault
   resource_group_name = var.acs_resource_group
+}
+
+resource "azurerm_key_vault_access_policy" "func_vault_id_mngmt" {
+  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_function_app.function_app.identity.0.principal_id
+
+  secret_permissions = [
+    "Get",
+    "List",
+    "Set",
+    "Delete",
+    "Recover",
+    "Backup",
+    "Restore"
+  ]
+
+  depends_on = [data.azurerm_key_vault.acs_key_vault]
 }
 
 resource "azurerm_key_vault_secret" "search-endpoint" {
