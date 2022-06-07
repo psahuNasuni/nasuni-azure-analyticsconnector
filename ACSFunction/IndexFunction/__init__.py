@@ -255,6 +255,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "dataSourceName": datasource_name,
             "targetIndexName": index_name,
             "skillsetName": skillset_name,
+            "schedule" : { "interval" : "PT50M" },
             "fieldMappings": [
                 {
                     "sourceFieldName": "metadata_storage_path",
