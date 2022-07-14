@@ -72,7 +72,7 @@ resource "azurerm_function_app" "function_app" {
     linux_fx_version          = "Python|3.9"
     use_32_bit_worker_process = false
     cors {
-     allowed_origins = ["*"]
+      allowed_origins = ["*"]
     }
   }
   storage_account_name       = azurerm_storage_account.storage_account.name
@@ -154,7 +154,8 @@ resource "null_resource" "execute_function" {
 
   depends_on = [
     null_resource.function_app_publish,
-    null_resource.set_key_vault_env_var
+    null_resource.set_key_vault_env_var,
+    azurerm_key_vault_access_policy.func_vault_id_mngmt
   ]
 }
 
