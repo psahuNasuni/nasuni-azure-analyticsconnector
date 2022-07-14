@@ -71,6 +71,9 @@ resource "azurerm_function_app" "function_app" {
   site_config {
     linux_fx_version          = "Python|3.9"
     use_32_bit_worker_process = false
+    cors {
+     allowed_origins = ["*"]
+    }
   }
   storage_account_name       = azurerm_storage_account.storage_account.name
   storage_account_access_key = azurerm_storage_account.storage_account.primary_access_key
@@ -119,9 +122,10 @@ resource "azurerm_key_vault_access_policy" "func_vault_id_mngmt" {
   depends_on = [data.azurerm_key_vault.acs_key_vault]
 }
 
+
 resource "azurerm_key_vault_secret" "search-endpoint" {
   name         = "search-endpoint-test"
-  value        = "https://${azurerm_function_app.function_app.default_hostname}/api/SearchFunction"
+  value        = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
   key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
@@ -143,6 +147,16 @@ resource "azurerm_key_vault_secret" "unifs-toc-handle" {
   key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
+resource "null_resource" "execute_function" {
+  provisioner "local-exec" {
+    command = "curl https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
+  }
+
+  depends_on = [
+    null_resource.function_app_publish,
+    null_resource.set_key_vault_env_var
+  ]
+}
 
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
@@ -151,5 +165,5 @@ resource "null_resource" "set_key_vault_env_var" {
 }
 
 output "FunctionAppSearchURL" {
-  value = "https://${azurerm_function_app.function_app.default_hostname}/api/SearchFunction"
+  value = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
 }
