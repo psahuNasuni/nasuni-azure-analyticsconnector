@@ -155,7 +155,11 @@ resource "null_resource" "execute_function" {
   depends_on = [
     null_resource.function_app_publish,
     null_resource.set_key_vault_env_var,
-    azurerm_key_vault_access_policy.func_vault_id_mngmt
+    azurerm_key_vault_access_policy.func_vault_id_mngmt,
+    azurerm_key_vault_secret.search-endpoint,
+    azurerm_key_vault_secret.web-access-appliance-address,
+    azurerm_key_vault_secret.nmc-volume-name,
+    azurerm_key_vault_secret.unifs-toc-handle
   ]
 }
 
