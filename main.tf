@@ -147,22 +147,6 @@ resource "azurerm_key_vault_secret" "unifs-toc-handle" {
   key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
-# resource "null_resource" "execute_function" {
-#   provisioner "local-exec" {
-#     command = "curl https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
-#   }
-
-#   depends_on = [
-#     null_resource.function_app_publish,
-#     null_resource.set_key_vault_env_var,
-#     azurerm_key_vault_access_policy.func_vault_id_mngmt,
-#     azurerm_key_vault_secret.search-endpoint,
-#     azurerm_key_vault_secret.web-access-appliance-address,
-#     azurerm_key_vault_secret.nmc-volume-name,
-#     azurerm_key_vault_secret.unifs-toc-handle
-#   ]
-# }
-
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
     command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${data.azurerm_key_vault.acs_key_vault.name}"
