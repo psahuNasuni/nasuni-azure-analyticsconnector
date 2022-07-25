@@ -122,6 +122,12 @@ resource "azurerm_key_vault_access_policy" "func_vault_id_mngmt" {
   depends_on = [data.azurerm_key_vault.acs_key_vault]
 }
 
+resource "azurerm_key_vault_secret" "index-endpoint" {
+  name         = "index-endpoint"
+  value        = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
+  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+}
+
 resource "azurerm_key_vault_secret" "web-access-appliance-address" {
   name         = "web-access-appliance-address"
   value        = var.web_access_appliance_address
