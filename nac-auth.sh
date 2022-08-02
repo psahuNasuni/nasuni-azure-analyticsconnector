@@ -1,5 +1,4 @@
 #!/bin/bash/
-COMMAND=`az login --identity`
 ACCOUNT=`az account show`
 echo "<<<<<<<<<<<<<< $ACCOUNT : >>>>>>>>>>>>>>>>>"
 echo "INFO ::: Encrypting config.dat file : STARTED"
