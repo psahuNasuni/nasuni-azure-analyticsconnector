@@ -148,7 +148,7 @@ resource "azurerm_key_vault_secret" "unifs-toc-handle" {
 
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${data.azurerm_key_vault.acs_key_vault.name}"
+    command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${var.acs_key_vault}"
   }
 }
 
