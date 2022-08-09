@@ -24,7 +24,7 @@ resource "azurerm_resource_group" "resource_group" {
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
 resource "azurerm_storage_account" "storage_account" {
-  name                     = "nasuni-st-${random_id.nac_unique_stack_id.hex}"
+  name                     = "nasunist${random_id.nac_unique_stack_id.hex}"
   resource_group_name      = azurerm_resource_group.resource_group.name
   location                 = azurerm_resource_group.resource_group.location
   account_tier             = "Standard"
@@ -41,7 +41,7 @@ resource "azurerm_application_insights" "app_insights" {
 }
 
 ###### App Service Plan for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_app_service_plan" "app_service_plan" {
+resource "azurerm_service_plan" "app_service_plan" {
   name                = "nasuni-app-service-plan-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
@@ -58,7 +58,7 @@ resource "azurerm_function_app" "function_app" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
-  app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
+  app_service_plan_id = azurerm_service_plan.app_service_plan.id
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE"       = "1",
     "FUNCTIONS_WORKER_RUNTIME"       = "python",
@@ -82,7 +82,7 @@ resource "azurerm_function_app" "function_app" {
   version                    = "~3"
   depends_on = [
     azurerm_storage_account.storage_account,
-    azurerm_app_service_plan.app_service_plan
+    azurerm_service_plan.app_service_plan
   ]
 }
 
