@@ -104,8 +104,6 @@ resource "null_resource" "function_app_publish" {
 }
 ########### END ::: Provision NAC_Discovery Function  #################
 
-############  Adding access_policy for the Function App of NAC_Discovery 
-
 ########### START : Provision NAC ###########################
 
 resource "null_resource" "provision_nac" {
@@ -118,16 +116,12 @@ resource "null_resource" "provision_nac" {
 
 ########### START : Create and Update Key-Vault index-endpoint ###########################
 
-resource "azurerm_app_configuration_key" "datasource_connection_string" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "datasource-connection-string"
-  label                  = "datasource-connection-string"
-  value                  = var.datasource_connection_string
-
-  depends_on = [
-    azurerm_role_assignment.appconf_dataowner
-  ]
-}
+# resource "azurerm_app_configuration_key" "datasource_connection_string" {
+#   configuration_store_id = data.azurerm_app_configuration.appconf.id
+#   key                    = "datasource-connection-string"
+#   label                  = "datasource-connection-string"
+#   value                  = var.datasource_connection_string
+# }
 
 resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id

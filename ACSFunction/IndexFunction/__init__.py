@@ -6,7 +6,6 @@ import requests
 import azure.functions as func
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-import os
 from azure.appconfiguration import AzureAppConfigurationClient, ConfigurationSetting
 
 
@@ -25,13 +24,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     retrieved_config_unifs_toc_handle = app_config_client.get_configuration_setting(key='unifs-toc-handle', label='unifs-toc-handle')
     retrieved_config_web_access_appliance_address = app_config_client.get_configuration_setting(key='web-access-appliance-address', label='web-access-appliance-address')
     
-    # logging.info('Fetching Secretes from Azure App Configuration')
+    logging.info('Fetching Secretes from Azure App Configuration')
     acs_api_key = retrieved_config_acs_api_key.value
     nmc_api_acs_url = retrieved_config_nmc_api_acs_url.value
     datasource_connection_string = retrieved_config_datasource_connection_string.value
     destination_container_name = retrieved_config_destination_container_name.value
-
-    # # # Construct the access_url
     nmc_volume_name = retrieved_config_nmc_volume_name.value
     unifs_toc_handle = retrieved_config_unifs_toc_handle.value
     web_access_appliance_address = retrieved_config_web_access_appliance_address.value
