@@ -1,7 +1,7 @@
 data "azurerm_client_config" "current" {}
 
-data "azurerm_key_vault" "acs_key_vault" {
-  name                = var.acs_key_vault
+data "azurerm_app_configuration" "appconf" {
+  name                = var.acs_admin_app_config_name
   resource_group_name = var.acs_resource_group
 }
 
@@ -105,24 +105,6 @@ resource "null_resource" "function_app_publish" {
 ########### END ::: Provision NAC_Discovery Function  #################
 
 ############  Adding access_policy for the Function App of NAC_Discovery 
-resource "azurerm_key_vault_access_policy" "func_vault_id_mngmt" {
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_function_app.function_app.identity.0.principal_id
-
-  secret_permissions = [
-    "Get",
-    "List",
-    "Set",
-    "Delete",
-    "Recover",
-    "Backup",
-    "Restore"
-  ]
-
-  depends_on = [data.azurerm_key_vault.acs_key_vault]
-}
-
 
 ########### START : Provision NAC ###########################
 
@@ -136,35 +118,50 @@ resource "null_resource" "provision_nac" {
 
 ########### START : Create and Update Key-Vault index-endpoint ###########################
 
-resource "azurerm_key_vault_secret" "index-endpoint" {
-  name         = "index-endpoint"
+resource "azurerm_app_configuration_key" "datasource_connection_string" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key                    = "datasource-connection-string"
+  label                  = "datasource-connection-string"
+  value                  = var.datasource_connection_string
+
+  depends_on = [
+    azurerm_role_assignment.appconf_dataowner
+  ]
+}
+
+resource "azurerm_app_configuration_key" "index-endpoint" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key         = "index-endpoint"
+  label       = "index-endpoint"
   value        = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
-resource "azurerm_key_vault_secret" "web-access-appliance-address" {
-  name         = "web-access-appliance-address"
-  value        = var.web_access_appliance_address
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+resource "azurerm_app_configuration_key" "web-access-appliance-address" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key         = "web-access-appliance-address"
+  label       = "web-access-appliance-address"
+  value       = var.web_access_appliance_address
 }
 
-resource "azurerm_key_vault_secret" "nmc-volume-name" {
-  name         = "nmc-volume-name"
+resource "azurerm_app_configuration_key" "nmc-volume-name" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key         = "nmc-volume-name"
+  label         = "nmc-volume-name"
   value        = var.nmc_volume_name
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
 }
 
-resource "azurerm_key_vault_secret" "unifs-toc-handle" {
-  name         = "unifs-toc-handle"
-  value        = var.unifs_toc_handle
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+resource "azurerm_app_configuration_key" "unifs-toc-handle" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key         = "unifs-toc-handle"
+  label       = "unifs-toc-handle"
+  value       = var.unifs_toc_handle
 }
 ########### END : Create and Update Key-Vault index-endpoint ###########################
 
 ###### Setting Environment Variables for Azure Indexing Function ###############
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${var.acs_key_vault}"
+    command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings ACS_ADMIN_APP_CONFIG_CONNECTION_STRING=${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}"
   }
 }
 ###### END ::: Setting Environment Variables for Azure Indexing Function ###############

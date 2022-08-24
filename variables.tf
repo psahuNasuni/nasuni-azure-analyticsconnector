@@ -16,8 +16,8 @@ variable "azure_location" {
   default     = ""
 }
 
-variable "acs_key_vault" {
-  description = "Azure Key Vault name for Azure Cognitive Search"
+variable "acs_admin_app_config_name" {
+  description = "Azure acs_admin_app_config_name"
   type        = string
   default     = ""
 }
