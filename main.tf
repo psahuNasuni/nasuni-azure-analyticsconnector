@@ -5,7 +5,8 @@ data "azurerm_app_configuration" "appconf" {
   resource_group_name = var.acs_resource_group
 }
 
-########### START ::: Provision NAC_Discovery Function  #################
+
+########## START ::: Provision NAC_Discovery Function  #################
 resource "random_id" "nac_unique_stack_id" {
   byte_length = 4
 }
@@ -86,7 +87,7 @@ resource "azurerm_function_app" "discovery_function_app" {
   ]
 }
 
-###### Locals: used for publishing NAC_Discovery Function ###############
+##### Locals: used for publishing NAC_Discovery Function ###############
 locals {
   publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.discovery_function_app.name} --src ${var.output_path}"
 }
@@ -102,9 +103,9 @@ resource "null_resource" "function_app_publish" {
     publish_code_command = local.publish_code_command
   }
 }
-########### END ::: Provision NAC_Discovery Function  #################
+########## END ::: Provision NAC_Discovery Function  #################
 
-########### START : Provision NAC ###########################
+########## START : Provision NAC ###########################
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
@@ -147,14 +148,6 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
   value       = var.unifs_toc_handle
 }
 ########### END : Create and Update Key-Vault index-endpoint ###########################
-
-###### Setting Environment Variables for Azure Indexing Function ###############
-resource "null_resource" "set_key_vault_env_var" {
-  provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings ACS_ADMIN_APP_CONFIG_CONNECTION_STRING=${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}"
-  }
-}
-###### END ::: Setting Environment Variables for Azure Indexing Function ###############
 
 output "FunctionAppSearchURL" {
   value = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"

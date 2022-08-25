@@ -10,11 +10,12 @@ from azure.appconfiguration import AzureAppConfigurationClient, ConfigurationSet
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
+    logging.info('INFO ::: Python HTTP trigger function processed a request.')
     ### Connect to an App Configuration store
     connection_string = os.getenv('ACS_ADMIN_APP_CONFIG_CONNECTION_STRING')
-    # connection_string = "Endpoint=https://nasuni-labs-acs-admin.azconfig.io;Id=l3/w-l0-s0:CCUv6UV80DrW8pZ8A7zt;Secret=3kQ0GVNf7nJ2CUb4Id5FtBeFcWbrrJOCu/tuVdUlHqU="
+    logging.info('INFO ::: ACS_ADMIN_APP_CONFIG_CONNECTION_STRING:{}'.format(connection_string))
     app_config_client = AzureAppConfigurationClient.from_connection_string(connection_string)
+    logging.info('INFO ::: App Config client Creation is successfull')    
 
     retrieved_config_acs_api_key = app_config_client.get_configuration_setting(key='acs-api-key', label='acs-api-key')
     retrieved_config_nmc_api_acs_url = app_config_client.get_configuration_setting(key='nmc-api-acs-url', label='nmc-api-acs-url')
@@ -32,8 +33,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     nmc_volume_name = retrieved_config_nmc_volume_name.value
     unifs_toc_handle = retrieved_config_unifs_toc_handle.value
     web_access_appliance_address = retrieved_config_web_access_appliance_address.value
-    
-    logging.info('***********************************')
+
     logging.info('acs_api_key:{}'.format(acs_api_key))
     logging.info('nmc_api_acs_url:{}'.format(nmc_api_acs_url))
     logging.info('datasource_connection_string:{}'.format(datasource_connection_string))
@@ -41,8 +41,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('nmc_volume_name:{}'.format(nmc_volume_name))
     logging.info('unifs_toc_handle:{}'.format(unifs_toc_handle))
     logging.info('web_access_appliance_address:{}'.format(web_access_appliance_address))
-    logging.info('***********************************')
-
 
     access_url = "https://" + web_access_appliance_address + "/fs/view/" + nmc_volume_name + "/" 
     logging.info('access_url:{}'.format(access_url))
