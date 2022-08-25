@@ -12,7 +12,8 @@ from azure.appconfiguration import AzureAppConfigurationClient, ConfigurationSet
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('INFO ::: Python HTTP trigger function processed a request.')
     ### Connect to an App Configuration store
-    connection_string = os.getenv("ACS_ADMIN_APP_CONFIG_CONNECTION_STRING")
+    connection_string = os.environ["ACS_ADMIN_APP_CONFIG_CONNECTION_STRING"]
+    # connection_string = os.getenv("ACS_ADMIN_APP_CONFIG_CONNECTION_STRING")
     logging.info('INFO ::: ACS_ADMIN_APP_CONFIG_CONNECTION_STRING:{}'.format(connection_string))
     app_config_client = AzureAppConfigurationClient.from_connection_string(connection_string)
     logging.info('INFO ::: App Config client Creation is successfull')    
