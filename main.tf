@@ -54,7 +54,7 @@ resource "azurerm_app_service_plan" "app_service_plan" {
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_function_app" "function_app" {
+resource "azurerm_function_app" "discovery_function_app" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
@@ -88,7 +88,7 @@ resource "azurerm_function_app" "function_app" {
 
 ###### Locals: used for publishing NAC_Discovery Function ###############
 locals {
-  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.function_app.name} --src ${var.output_path}"
+  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.discovery_function_app.name} --src ${var.output_path}"
 }
 
 ###### Publish : NAC_Discovery Function ###############
@@ -96,7 +96,7 @@ resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
     command = local.publish_code_command
   }
-  depends_on = [azurerm_function_app.function_app, local.publish_code_command]
+  depends_on = [azurerm_function_app.discovery_function_app, local.publish_code_command]
   triggers = {
     input_json           = filemd5(var.output_path)
     publish_code_command = local.publish_code_command
@@ -116,18 +116,14 @@ resource "null_resource" "provision_nac" {
 
 ########### START : Create and Update Key-Vault index-endpoint ###########################
 
-# resource "azurerm_app_configuration_key" "datasource_connection_string" {
-#   configuration_store_id = data.azurerm_app_configuration.appconf.id
-#   key                    = "datasource-connection-string"
-#   label                  = "datasource-connection-string"
-#   value                  = var.datasource_connection_string
-# }
-
 resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
   key         = "index-endpoint"
   label       = "index-endpoint"
-  value        = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
+  value        = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  depends_on = [
+    azurerm_function_app.discovery_function_app
+  ]
 }
 
 resource "azurerm_app_configuration_key" "web-access-appliance-address" {
@@ -155,11 +151,11 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
 ###### Setting Environment Variables for Azure Indexing Function ###############
 resource "null_resource" "set_key_vault_env_var" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings ACS_ADMIN_APP_CONFIG_CONNECTION_STRING=${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}"
+    command = "az functionapp config appsettings set --name ${azurerm_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings ACS_ADMIN_APP_CONFIG_CONNECTION_STRING=${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}"
   }
 }
 ###### END ::: Setting Environment Variables for Azure Indexing Function ###############
 
 output "FunctionAppSearchURL" {
-  value = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
+  value = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
 }
