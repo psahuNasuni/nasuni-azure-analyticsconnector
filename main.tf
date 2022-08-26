@@ -5,7 +5,6 @@ data "azurerm_app_configuration" "appconf" {
   resource_group_name = var.acs_resource_group
 }
 
-
 ########## START ::: Provision NAC_Discovery Function  #################
 resource "random_id" "nac_unique_stack_id" {
   byte_length = 4
@@ -119,9 +118,9 @@ resource "null_resource" "provision_nac" {
 
 resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key         = "index-endpoint"
-  label       = "index-endpoint"
-  value        = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  key                    = "index-endpoint"
+  label                  = "index-endpoint"
+  value                  = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
   depends_on = [
     azurerm_function_app.discovery_function_app
   ]
@@ -129,23 +128,23 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
 
 resource "azurerm_app_configuration_key" "web-access-appliance-address" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key         = "web-access-appliance-address"
-  label       = "web-access-appliance-address"
-  value       = var.web_access_appliance_address
+  key                    = "web-access-appliance-address"
+  label                  = "web-access-appliance-address"
+  value                  = var.web_access_appliance_address
 }
 
 resource "azurerm_app_configuration_key" "nmc-volume-name" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key         = "nmc-volume-name"
-  label         = "nmc-volume-name"
-  value        = var.nmc_volume_name
+  key                    = "nmc-volume-name"
+  label                  = "nmc-volume-name"
+  value                  = var.nmc_volume_name
 }
 
 resource "azurerm_app_configuration_key" "unifs-toc-handle" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key         = "unifs-toc-handle"
-  label       = "unifs-toc-handle"
-  value       = var.unifs_toc_handle
+  key                    = "unifs-toc-handle"
+  label                  = "unifs-toc-handle"
+  value                  = var.unifs_toc_handle
 }
 ########### END : Create and Update Key-Vault index-endpoint ###########################
 

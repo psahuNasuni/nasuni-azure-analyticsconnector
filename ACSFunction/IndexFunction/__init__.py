@@ -13,7 +13,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('INFO ::: Python HTTP trigger function processed a request.')
     ### Connect to an App Configuration store
     connection_string = os.environ["AZURE_APP_CONFIG"]
-    # connection_string = os.getenv("AZURE_APP_CONFIG")
     logging.info('INFO ::: AZURE_APP_CONFIG:{}'.format(connection_string))
     app_config_client = AzureAppConfigurationClient.from_connection_string(connection_string)
     logging.info('INFO ::: App Config client Creation is successfull')    
@@ -34,14 +33,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     nmc_volume_name = retrieved_config_nmc_volume_name.value
     unifs_toc_handle = retrieved_config_unifs_toc_handle.value
     web_access_appliance_address = retrieved_config_web_access_appliance_address.value
-
-    logging.info('acs_api_key:{}'.format(acs_api_key))
-    logging.info('nmc_api_acs_url:{}'.format(nmc_api_acs_url))
-    logging.info('datasource_connection_string:{}'.format(datasource_connection_string))
-    logging.info('destination_container_name:{}'.format(destination_container_name))
-    logging.info('nmc_volume_name:{}'.format(nmc_volume_name))
-    logging.info('unifs_toc_handle:{}'.format(unifs_toc_handle))
-    logging.info('web_access_appliance_address:{}'.format(web_access_appliance_address))
 
     access_url = "https://" + web_access_appliance_address + "/fs/view/" + nmc_volume_name + "/" 
     logging.info('access_url:{}'.format(access_url))
