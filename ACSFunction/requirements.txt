@@ -3,6 +3,7 @@
 azure-functions
 azure-identity
 azure-keyvault-secrets
+azure-appconfiguration
 requests==2.27.1
 jsons==1.6.1
 cryptography

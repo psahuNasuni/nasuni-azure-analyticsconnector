@@ -1,11 +1,11 @@
 data "azurerm_client_config" "current" {}
 
-data "azurerm_key_vault" "acs_key_vault" {
-  name                = var.acs_key_vault
+data "azurerm_app_configuration" "appconf" {
+  name                = var.acs_admin_app_config_name
   resource_group_name = var.acs_resource_group
 }
 
-########### START ::: Provision NAC_Discovery Function  #################
+########## START ::: Provision NAC_Discovery Function  #################
 resource "random_id" "nac_unique_stack_id" {
   byte_length = 4
 }
@@ -54,7 +54,7 @@ resource "azurerm_app_service_plan" "app_service_plan" {
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_function_app" "function_app" {
+resource "azurerm_function_app" "discovery_function_app" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
@@ -86,9 +86,9 @@ resource "azurerm_function_app" "function_app" {
   ]
 }
 
-###### Locals: used for publishing NAC_Discovery Function ###############
+##### Locals: used for publishing NAC_Discovery Function ###############
 locals {
-  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.function_app.name} --src ${var.output_path}"
+  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.discovery_function_app.name} --src ${var.output_path}"
 }
 
 ###### Publish : NAC_Discovery Function ###############
@@ -96,35 +96,15 @@ resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
     command = local.publish_code_command
   }
-  depends_on = [azurerm_function_app.function_app, local.publish_code_command]
+  depends_on = [azurerm_function_app.discovery_function_app, local.publish_code_command]
   triggers = {
     input_json           = filemd5(var.output_path)
     publish_code_command = local.publish_code_command
   }
 }
-########### END ::: Provision NAC_Discovery Function  #################
+########## END ::: Provision NAC_Discovery Function  #################
 
-############  Adding access_policy for the Function App of NAC_Discovery 
-resource "azurerm_key_vault_access_policy" "func_vault_id_mngmt" {
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
-  tenant_id    = data.azurerm_client_config.current.tenant_id
-  object_id    = azurerm_function_app.function_app.identity.0.principal_id
-
-  secret_permissions = [
-    "Get",
-    "List",
-    "Set",
-    "Delete",
-    "Recover",
-    "Backup",
-    "Restore"
-  ]
-
-  depends_on = [data.azurerm_key_vault.acs_key_vault]
-}
-
-
-########### START : Provision NAC ###########################
+########## START : Provision NAC ###########################
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
@@ -136,39 +116,38 @@ resource "null_resource" "provision_nac" {
 
 ########### START : Create and Update Key-Vault index-endpoint ###########################
 
-resource "azurerm_key_vault_secret" "index-endpoint" {
-  name         = "index-endpoint"
-  value        = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+resource "azurerm_app_configuration_key" "index-endpoint" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key                    = "index-endpoint"
+  label                  = "index-endpoint"
+  value                  = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  depends_on = [
+    azurerm_function_app.discovery_function_app
+  ]
 }
 
-resource "azurerm_key_vault_secret" "web-access-appliance-address" {
-  name         = "web-access-appliance-address"
-  value        = var.web_access_appliance_address
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+resource "azurerm_app_configuration_key" "web-access-appliance-address" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key                    = "web-access-appliance-address"
+  label                  = "web-access-appliance-address"
+  value                  = var.web_access_appliance_address
 }
 
-resource "azurerm_key_vault_secret" "nmc-volume-name" {
-  name         = "nmc-volume-name"
-  value        = var.nmc_volume_name
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+resource "azurerm_app_configuration_key" "nmc-volume-name" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key                    = "nmc-volume-name"
+  label                  = "nmc-volume-name"
+  value                  = var.nmc_volume_name
 }
 
-resource "azurerm_key_vault_secret" "unifs-toc-handle" {
-  name         = "unifs-toc-handle"
-  value        = var.unifs_toc_handle
-  key_vault_id = data.azurerm_key_vault.acs_key_vault.id
+resource "azurerm_app_configuration_key" "unifs-toc-handle" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key                    = "unifs-toc-handle"
+  label                  = "unifs-toc-handle"
+  value                  = var.unifs_toc_handle
 }
 ########### END : Create and Update Key-Vault index-endpoint ###########################
 
-###### Setting Environment Variables for Azure Indexing Function ###############
-resource "null_resource" "set_key_vault_env_var" {
-  provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_function_app.function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_KEY_VAULT=${var.acs_key_vault}"
-  }
-}
-###### END ::: Setting Environment Variables for Azure Indexing Function ###############
-
 output "FunctionAppSearchURL" {
-  value = "https://${azurerm_function_app.function_app.default_hostname}/api/IndexFunction"
+  value = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
 }
