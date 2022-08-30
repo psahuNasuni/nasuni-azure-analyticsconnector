@@ -45,13 +45,3 @@ variable "output_path" {
   description = "function_path of file where zip file is stored"
   default     = "./ACSFunction.zip"
 }
-
-variable "subscription_id" {
-  description = "Subscription id of azure account"
-  default     = ""
-}
-
-variable "tenant_id" {
-  description = "Tenant id of azure account"
-  default     = ""
-}

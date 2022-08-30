@@ -41,54 +41,51 @@ resource "azurerm_application_insights" "app_insights" {
 }
 
 ###### App Service Plan for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_app_service_plan" "app_service_plan" {
+resource "azurerm_service_plan" "app_service_plan" {
   name                = "nasuni-app-service-plan-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
-  kind                = "FunctionApp"
-  reserved            = true # This has to be set to true for Linux. Not related to the Premium Plan
-  sku {
-    tier = "Dynamic"
-    size = "Y1"
-  }
+  os_type             = "Linux"
+  sku_name            = "Y1"
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_function_app" "discovery_function_app" {
+resource "azurerm_linux_function_app" "discovery_function_app" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = azurerm_resource_group.resource_group.name
   location            = azurerm_resource_group.resource_group.location
-  app_service_plan_id = azurerm_app_service_plan.app_service_plan.id
+  service_plan_id     = azurerm_service_plan.app_service_plan.id
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE"       = "1",
-    "FUNCTIONS_WORKER_RUNTIME"       = "python",
-    "AzureWebJobsDisableHomepage"    = "false",
-    "https_only"                     = "true",
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = "${azurerm_application_insights.app_insights.instrumentation_key}"
+    "WEBSITE_RUN_FROM_PACKAGE"    = "1",
+    "FUNCTIONS_WORKER_RUNTIME"    = "python",
+    "AzureWebJobsDisableHomepage" = "false"
   }
   identity {
     type = "SystemAssigned"
   }
-  os_type = "linux"
   site_config {
-    linux_fx_version          = "Python|3.9"
-    use_32_bit_worker_process = false
+    use_32_bit_worker        = false
+    application_insights_key = azurerm_application_insights.app_insights.instrumentation_key
     cors {
       allowed_origins = ["*"]
     }
+    application_stack {
+      python_version = "3.9"
+    }
   }
-  storage_account_name       = azurerm_storage_account.storage_account.name
-  storage_account_access_key = azurerm_storage_account.storage_account.primary_access_key
-  version                    = "~3"
+  https_only                  = "true"
+  storage_account_name        = azurerm_storage_account.storage_account.name
+  storage_account_access_key  = azurerm_storage_account.storage_account.primary_access_key
+  functions_extension_version = "~4"
   depends_on = [
     azurerm_storage_account.storage_account,
-    azurerm_app_service_plan.app_service_plan
+    azurerm_service_plan.app_service_plan
   ]
 }
 
 ##### Locals: used for publishing NAC_Discovery Function ###############
 locals {
-  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_function_app.discovery_function_app.name} --src ${var.output_path}"
+  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --src ${var.output_path}"
 }
 
 ###### Publish : NAC_Discovery Function ###############
@@ -96,7 +93,7 @@ resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
     command = local.publish_code_command
   }
-  depends_on = [azurerm_function_app.discovery_function_app, local.publish_code_command]
+  depends_on = [azurerm_linux_function_app.discovery_function_app, local.publish_code_command]
   triggers = {
     input_json           = filemd5(var.output_path)
     publish_code_command = local.publish_code_command
@@ -120,9 +117,9 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
   key                    = "index-endpoint"
   label                  = "index-endpoint"
-  value                  = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  value                  = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
   depends_on = [
-    azurerm_function_app.discovery_function_app
+    azurerm_linux_function_app.discovery_function_app
   ]
 }
 
@@ -149,5 +146,5 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
 ########### END : Create and Update Key-Vault index-endpoint ###########################
 
 output "FunctionAppSearchURL" {
-  value = "https://${azurerm_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  value = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
 }

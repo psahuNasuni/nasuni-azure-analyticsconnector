@@ -4,9 +4,7 @@ import logging
 import json
 import requests
 import azure.functions as func
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
-from azure.appconfiguration import AzureAppConfigurationClient, ConfigurationSetting
+from azure.appconfiguration import AzureAppConfigurationClient
 
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -21,22 +19,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     retrieved_config_nmc_api_acs_url = app_config_client.get_configuration_setting(key='nmc-api-acs-url', label='nmc-api-acs-url')
     retrieved_config_datasource_connection_string = app_config_client.get_configuration_setting(key='datasource-connection-string', label='datasource-connection-string')
     retrieved_config_destination_container_name = app_config_client.get_configuration_setting(key='destination-container-name', label='destination-container-name')
-    retrieved_config_nmc_volume_name = app_config_client.get_configuration_setting(key='nmc-volume-name', label='nmc-volume-name')
-    retrieved_config_unifs_toc_handle = app_config_client.get_configuration_setting(key='unifs-toc-handle', label='unifs-toc-handle')
-    retrieved_config_web_access_appliance_address = app_config_client.get_configuration_setting(key='web-access-appliance-address', label='web-access-appliance-address')
     
     logging.info('Fetching Secretes from Azure App Configuration')
     acs_api_key = retrieved_config_acs_api_key.value
     nmc_api_acs_url = retrieved_config_nmc_api_acs_url.value
     datasource_connection_string = retrieved_config_datasource_connection_string.value
     destination_container_name = retrieved_config_destination_container_name.value
-    nmc_volume_name = retrieved_config_nmc_volume_name.value
-    unifs_toc_handle = retrieved_config_unifs_toc_handle.value
-    web_access_appliance_address = retrieved_config_web_access_appliance_address.value
-
-    access_url = "https://" + web_access_appliance_address + "/fs/view/" + nmc_volume_name + "/" 
-    logging.info('access_url:{}'.format(access_url))
-    #############################################################
 
     # Define the names for the data source, skillset, index and indexer
     datasource_name = "datasource"
@@ -205,7 +193,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "facetable": "false"
             },
             {
-                "name": "File_Location",
+                "name": "file_location",
                 "type": "Edm.String",
                 "searchable": "true",
                 "filterable": "false",
@@ -214,7 +202,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "sortable": "true"
             },
             {
-                "name": "TOC_Handle",
+                "name": "toc_handle",
                 "type": "Edm.String",
                 "searchable": "false",
                 "filterable": "false",
@@ -223,7 +211,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "sortable": "true"
             },
             {
-                "name": "Volume_Name",
+                "name": "volume_name",
                 "type": "Edm.String",
                 "searchable": "false",
                 "filterable": "false",
@@ -257,7 +245,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             },
             {
                 "sourceFieldName": "metadata_storage_name",
-                "targetFieldName": "File_Location"
+                "targetFieldName": "file_location"
+            },
+            {
+                "sourceFieldName": "toc_handle",
+                "targetFieldName": "toc_handle"
+            },
+            {
+                "sourceFieldName": "volume_name",
+                "targetFieldName": "volume_name"
             }
         ],
         "outputFieldMappings":
@@ -273,14 +269,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "sourceFieldName": "/document/languageCode",
                 "targetFieldName": "languageCode"
-            },
-            {
-                "sourceFieldName": "/document/languageCode",
-                "targetFieldName": "TOC_Handle"
-            },
-            {
-                "sourceFieldName": "/document/languageCode",
-                "targetFieldName": "Volume_Name"
             }
         ],
         "parameters":
