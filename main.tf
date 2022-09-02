@@ -101,16 +101,6 @@ resource "null_resource" "function_app_publish" {
 }
 ########## END ::: Provision NAC_Discovery Function  #################
 
-########## START : Provision NAC ###########################
-
-resource "null_resource" "provision_nac" {
-  provisioner "local-exec" {
-    command = "sh nac-auth.sh"
-  }
-}
-
-########### END : Provision NAC ###########################
-
 ########### START : Create and Update Key-Vault index-endpoint ###########################
 
 resource "azurerm_app_configuration_key" "index-endpoint" {
