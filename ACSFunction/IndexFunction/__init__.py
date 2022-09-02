@@ -45,7 +45,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     datasourceConnectionString = datasource_connection_string
     datasource_payload = {
         "name": datasource_name,
-        "description": "Demo files to demonstrate cognitive search capabilities.",
+        "description": "Destination container datasource.",
         "type": "azureblob",
         "credentials": {
             "connectionString": datasourceConnectionString
@@ -214,7 +214,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "name": "volume_name",
                 "type": "Edm.String",
                 "searchable": "false",
-                "filterable": "false",
+                "filterable": "true",
                 "facetable": "false"
             }
         ]
