@@ -104,7 +104,7 @@ resource "null_resource" "function_app_publish" {
 ########## START : Set Environmental Variable to NAC Discovery Function ###########################
 resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=${data.azurerm_app_configuration.appconf.primary_write_key.connection_string}"
+    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
   }
   depends_on = [
     null_resource.function_app_publish
