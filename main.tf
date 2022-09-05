@@ -104,7 +104,7 @@ resource "null_resource" "function_app_publish" {
 ########## START : Set Environmental Variable to NAC Discovery Function ###########################
 resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}"
+    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=${data.azurerm_app_configuration.appconf.primary_write_key.connection_string}"
   }
   depends_on = [
     null_resource.function_app_publish
@@ -162,7 +162,7 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
 ########## START : Run NAC Discovery Function ###########################
 resource "null_resource" "run_discovery_function" {
   provisioner "local-exec" {
-    command = "curl -X GET -H 'Content-Type:application/json' 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction'"
+    command = "curl -X GET -H \"Content-Type:application/json\" \"https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction\""
   }
   depends_on = [
     null_resource.set_env_variable,
@@ -170,7 +170,6 @@ resource "null_resource" "run_discovery_function" {
     azurerm_app_configuration_key.web-access-appliance-address,
     azurerm_app_configuration_key.nmc-volume-name,
     azurerm_app_configuration_key.unifs-toc-handle,
-
   ]
 }
 ########## END : Run NAC Discovery Function ###########################
