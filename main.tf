@@ -162,7 +162,7 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
 ########## START : Run NAC Discovery Function ###########################
 resource "null_resource" "run_discovery_function" {
   provisioner "local-exec" {
-    command = "curl -X GET -H \"Content-Type:application/json\" \"https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction\""
+    command = "curl -X GET -H 'Content-Type:application/json' 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction'"
   }
   depends_on = [
     null_resource.set_env_variable,
