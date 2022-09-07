@@ -101,17 +101,18 @@ resource "null_resource" "function_app_publish" {
 }
 ########## END ::: Provision NAC_Discovery Function  #################
 
-########## START : Provision NAC ###########################
-
-resource "null_resource" "provision_nac" {
+########## START : Set Environmental Variable to NAC Discovery Function ###########################
+resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
-    command = "sh nac-auth.sh"
+    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
   }
+  depends_on = [
+    null_resource.function_app_publish
+  ]
 }
+########## END : Set Environmental Variable to NAC Discovery Function ###########################
 
-########### END : Provision NAC ###########################
-
-########### START : Create and Update Key-Vault index-endpoint ###########################
+########### START : Create and Update App Configuration  ###########################
 
 resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
@@ -119,7 +120,8 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
   label                  = "index-endpoint"
   value                  = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
   depends_on = [
-    azurerm_linux_function_app.discovery_function_app
+    azurerm_linux_function_app.discovery_function_app,
+    null_resource.set_env_variable
   ]
 }
 
@@ -128,6 +130,10 @@ resource "azurerm_app_configuration_key" "web-access-appliance-address" {
   key                    = "web-access-appliance-address"
   label                  = "web-access-appliance-address"
   value                  = var.web_access_appliance_address
+  depends_on = [
+    azurerm_linux_function_app.discovery_function_app,
+    null_resource.set_env_variable
+  ]
 }
 
 resource "azurerm_app_configuration_key" "nmc-volume-name" {
@@ -135,6 +141,10 @@ resource "azurerm_app_configuration_key" "nmc-volume-name" {
   key                    = "nmc-volume-name"
   label                  = "nmc-volume-name"
   value                  = var.nmc_volume_name
+  depends_on = [
+    azurerm_linux_function_app.discovery_function_app,
+    null_resource.set_env_variable
+  ]
 }
 
 resource "azurerm_app_configuration_key" "unifs-toc-handle" {
@@ -142,8 +152,43 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
   key                    = "unifs-toc-handle"
   label                  = "unifs-toc-handle"
   value                  = var.unifs_toc_handle
+  depends_on = [
+    azurerm_linux_function_app.discovery_function_app,
+    null_resource.set_env_variable
+  ]
 }
-########### END : Create and Update Key-Vault index-endpoint ###########################
+########### END : Create and Update App Configuration  ###########################
+
+########## START : Run NAC Discovery Function ###########################
+resource "null_resource" "run_discovery_function" {
+  provisioner "local-exec" {
+    command = "sleep 10"
+  }
+  provisioner "local-exec" {
+    command = "curl -X GET 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction' -H 'Content-Type:application/json'"
+  }
+  depends_on = [
+    null_resource.set_env_variable,
+    azurerm_app_configuration_key.index-endpoint,
+    azurerm_app_configuration_key.web-access-appliance-address,
+    azurerm_app_configuration_key.nmc-volume-name,
+    azurerm_app_configuration_key.unifs-toc-handle,
+  ]
+}
+########## END : Run NAC Discovery Function ###########################
+
+########## START : Provision NAC ###########################
+
+resource "null_resource" "provision_nac" {
+  provisioner "local-exec" {
+    command = "sh nac-auth.sh"
+  }
+  depends_on = [
+    null_resource.run_discovery_function
+  ]
+}
+
+########### END : Provision NAC ###########################
 
 output "FunctionAppSearchURL" {
   value = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
