@@ -1,0 +1,7 @@
+# Do not include azure-functions-worker as it may conflict with the Azure Functions platfor
+azure-functions
+azure-appconfiguration
+requests==2.27.1
+jsons==1.6.1
+cryptography
+aiohttp
