@@ -156,7 +156,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "name": "id",
                 "type": "Edm.String",
-                "key": "true",
                 "searchable": "true",
                 "filterable": "false",
                 "facetable": "false",
@@ -165,6 +164,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "name": "content",
                 "type": "Edm.String",
+                "key": "true",
                 "sortable": "false",
                 "searchable": "true",
                 "filterable": "false",
