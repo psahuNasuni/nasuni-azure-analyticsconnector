@@ -290,7 +290,7 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
 
 resource "null_resource" "run_discovery_function" {
   provisioner "local-exec" {
-    command = "sleep 10"
+    command = "sleep 150"
   }
   provisioner "local-exec" {
     command = "curl -X GET 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction' -H 'Content-Type:application/json'"
