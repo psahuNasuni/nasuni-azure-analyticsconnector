@@ -144,18 +144,6 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
     application_stack {
       python_version = "3.9"
     }
-    ip_restriction {
-      action     = "Allow"
-      ip_address = "Any"
-      name       = "Allow all"
-      priority   = 2147483647
-    }
-    scm_ip_restriction {
-      action     = "Allow"
-      ip_address = "Any"
-      name       = "Allow all"
-      priority   = 2147483647
-    }
   }
   https_only                  = "true"
   storage_account_name        = azurerm_storage_account.storage_account.name
@@ -312,7 +300,7 @@ resource "null_resource" "run_discovery_function" {
     azurerm_app_configuration_key.index-endpoint,
     azurerm_app_configuration_key.web-access-appliance-address,
     azurerm_app_configuration_key.nmc-volume-name,
-    azurerm_app_configuration_key.unifs-toc-handle,
+    azurerm_app_configuration_key.unifs-toc-handle
   ]
 }
 ########## END : Run NAC Discovery Function ###########################

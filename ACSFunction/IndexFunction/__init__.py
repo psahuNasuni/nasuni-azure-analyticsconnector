@@ -272,12 +272,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         ],
         "parameters":
         {
-            "maxFailedItems": -1,
-            "maxFailedItemsPerBatch": -1,
+            "maxFailedItems": 0,
+            "maxFailedItemsPerBatch": 0,
             "configuration":
             {
                 "dataToExtract": "contentAndMetadata",
-                "imageAction": "generateNormalizedImages"
+                "imageAction": "generateNormalizedImages",
+                "executionEnvironment": "private"
             }
         }
     }
