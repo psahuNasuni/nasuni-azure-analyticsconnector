@@ -289,6 +289,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Indexer setup completed: ")
 
     return func.HttpResponse(
-            "This HTTP triggered function executed successfully.",
+            "This NAC Discovery Function Executed Successfully.",
             status_code=200
     )

@@ -61,6 +61,13 @@ resource "azurerm_storage_account" "storage_account" {
   ]
 }
 
+resource "null_resource" "disable_storage_public_access" {
+  provisioner "local-exec" {
+    command = var.use_private_acs == "Y" ? "az storage account update --allow-blob-public-access false --name ${azurerm_storage_account.storage_account.name} --resource-group ${azurerm_storage_account.storage_account.resource_group_name}" : ""
+  }
+  depends_on = [azurerm_storage_account.storage_account]
+}
+
 resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "nasunist${random_id.nac_unique_stack_id.hex}_private_endpoint"
@@ -82,11 +89,12 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
 
   depends_on = [
     azurerm_private_dns_zone.storage_account_dns_zone,
-    azurerm_storage_account.storage_account
+    azurerm_storage_account.storage_account,
+    null_resource.disable_storage_public_access
   ]
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "acs_private_link" {
+resource "azurerm_private_dns_zone_virtual_network_link" "storage_account_private_link" {
   count                 = var.use_private_acs == "Y" ? 1 : 0
   name                  = "nasunist${random_id.nac_unique_stack_id.hex}_link"
   resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
@@ -143,6 +151,18 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
     }
     application_stack {
       python_version = "3.9"
+    }
+    ip_restriction {
+      action                    = "Allow"
+      name                      = "https"
+      priority                  = "310"
+      virtual_network_subnet_id = data.azurerm_subnet.azure_subnet_name[0].id
+    }
+    scm_ip_restriction {
+      action                    = "Allow"
+      name                      = "https"
+      priority                  = "310"
+      virtual_network_subnet_id = data.azurerm_subnet.azure_subnet_name[0].id
     }
   }
   https_only                  = "true"
