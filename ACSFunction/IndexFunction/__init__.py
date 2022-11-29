@@ -272,12 +272,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         ],
         "parameters":
         {
-            "maxFailedItems": -1,
-            "maxFailedItemsPerBatch": -1,
+            "maxFailedItems": 0,
+            "maxFailedItemsPerBatch": 0,
             "configuration":
             {
                 "dataToExtract": "contentAndMetadata",
-                "imageAction": "generateNormalizedImages"
+                "imageAction": "generateNormalizedImages",
+                "executionEnvironment": "private"
             }
         }
     }
@@ -288,6 +289,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("Indexer setup completed: ")
 
     return func.HttpResponse(
-            "This HTTP triggered function executed successfully.",
+            "This NAC Discovery Function Executed Successfully.",
             status_code=200
     )

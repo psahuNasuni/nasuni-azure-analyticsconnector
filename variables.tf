@@ -45,3 +45,33 @@ variable "output_path" {
   description = "function_path of file where zip file is stored"
   default     = "./ACSFunction.zip"
 }
+
+variable "user_resource_group_name" {
+  description = "Resouce group name for Azure Function"
+  type        = string
+  default     = ""
+}
+
+variable "user_vnet_name" {
+  description = "Virtual Network Name for Azure Function"
+  type        = string
+  default     = ""
+}
+
+variable "user_subnet_name" {
+  description = "Available subnet name in Virtual Network"
+  type        = string
+  default     = ""
+}
+
+variable "use_private_acs" {
+  description = "Use Private ACS"
+  type        = string
+  default     = "N"
+}
+
+variable "user_outbound_subnet_name" {
+  description = "Available subnet name in Virtual Network"
+  type        = string
+  default     = ""
+}
