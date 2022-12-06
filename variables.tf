@@ -7,7 +7,7 @@
 variable "acs_resource_group" {
   description = "Resouce group name for Azure Cognitive Search"
   type        = string
-  default     = ""
+  default     = "nasuni-labs-acs-rg"
 }
 
 variable "azure_location" {
@@ -19,7 +19,7 @@ variable "azure_location" {
 variable "acs_admin_app_config_name" {
   description = "Azure acs_admin_app_config_name"
   type        = string
-  default     = ""
+  default     = "nasuni-labs-acs-admin"
 }
 
 variable "web_access_appliance_address" {
