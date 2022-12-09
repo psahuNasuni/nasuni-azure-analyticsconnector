@@ -232,6 +232,9 @@ locals {
 ###### Publish : NAC_Discovery Function ###############
 resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
+    command = "sleep 15"
+  }
+  provisioner "local-exec" {
     command = local.publish_code_command
   }
   depends_on = [
