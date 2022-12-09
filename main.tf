@@ -43,7 +43,13 @@ resource "azurerm_resource_group" "resource_group" {
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_private_dns_zone" "storage_account_dns_zone" {
+# resource "azurerm_private_dns_zone" "storage_account_dns_zone" {
+#   count               = var.use_private_acs == "Y" ? 1 : 0
+#   name                = "privatelink.blob.core.windows.net"
+#   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
+# }
+
+data "azurerm_private_dns_zone" "storage_account_dns_zone" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "privatelink.blob.core.windows.net"
   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
@@ -57,7 +63,7 @@ resource "azurerm_storage_account" "storage_account" {
   account_replication_type = "LRS"
 
   depends_on = [
-    azurerm_private_dns_zone.storage_account_dns_zone
+    data.azurerm_private_dns_zone.storage_account_dns_zone
   ]
 }
 
@@ -77,7 +83,7 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "default"
-    private_dns_zone_ids = [azurerm_private_dns_zone.storage_account_dns_zone[0].id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.storage_account_dns_zone[0].id]
   }
 
   private_service_connection {
@@ -88,23 +94,23 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
   }
 
   depends_on = [
-    azurerm_private_dns_zone.storage_account_dns_zone,
+    data.azurerm_private_dns_zone.storage_account_dns_zone,
     azurerm_storage_account.storage_account,
     null_resource.disable_storage_public_access
   ]
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "storage_account_private_link" {
-  count                 = var.use_private_acs == "Y" ? 1 : 0
-  name                  = "nasunist${random_id.nac_unique_stack_id.hex}_link"
-  resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.storage_account_dns_zone[0].name
-  virtual_network_id    = data.azurerm_virtual_network.VnetToBeUsed[0].id
+# resource "azurerm_private_dns_zone_virtual_network_link" "storage_account_private_link" {
+#   count                 = var.use_private_acs == "Y" ? 1 : 0
+#   name                  = "nasunist${random_id.nac_unique_stack_id.hex}_link"
+#   resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
+#   private_dns_zone_name = azurerm_private_dns_zone.storage_account_dns_zone[0].name
+#   virtual_network_id    = data.azurerm_virtual_network.VnetToBeUsed[0].id
 
-  depends_on = [
-    azurerm_private_dns_zone.storage_account_dns_zone
-  ]
-}
+#   depends_on = [
+#     azurerm_private_dns_zone.storage_account_dns_zone
+#   ]
+# }
 
 ###### App Insight for: Azure function NAC_Discovery in ACS Resource Group ###############
 resource "azurerm_application_insights" "app_insights" {
@@ -124,7 +130,13 @@ resource "azurerm_service_plan" "app_service_plan" {
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
-resource "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
+# resource "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
+#   count               = var.use_private_acs == "Y" ? 1 : 0
+#   name                = "privatelink.azurewebsites.net"
+#   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
+# }
+
+data "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "privatelink.azurewebsites.net"
   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
@@ -173,7 +185,7 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
     azurerm_storage_account.storage_account,
     azurerm_private_endpoint.storage_account_private_endpoint,
     azurerm_service_plan.app_service_plan,
-    azurerm_private_dns_zone.discovery_function_app_dns_zone
+    data.azurerm_private_dns_zone.discovery_function_app_dns_zone
   ]
 }
 
@@ -186,7 +198,7 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
 
   private_dns_zone_group {
     name                 = "default"
-    private_dns_zone_ids = [azurerm_private_dns_zone.discovery_function_app_dns_zone[0].id]
+    private_dns_zone_ids = [data.azurerm_private_dns_zone.discovery_function_app_dns_zone[0].id]
   }
 
   private_service_connection {
@@ -197,22 +209,22 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   }
 
   depends_on = [
-    azurerm_private_dns_zone.discovery_function_app_dns_zone,
+    data.azurerm_private_dns_zone.discovery_function_app_dns_zone,
     azurerm_linux_function_app.discovery_function_app
   ]
 }
 
-resource "azurerm_private_dns_zone_virtual_network_link" "discovery_function_app_private_link" {
-  count                 = var.use_private_acs == "Y" ? 1 : 0
-  name                  = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}_link"
-  resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-  private_dns_zone_name = azurerm_private_dns_zone.discovery_function_app_dns_zone[0].name
-  virtual_network_id    = data.azurerm_virtual_network.VnetToBeUsed[0].id
+# resource "azurerm_private_dns_zone_virtual_network_link" "discovery_function_app_private_link" {
+#   count                 = var.use_private_acs == "Y" ? 1 : 0
+#   name                  = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}_link"
+#   resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
+#   private_dns_zone_name = azurerm_private_dns_zone.discovery_function_app_dns_zone[0].name
+#   virtual_network_id    = data.azurerm_virtual_network.VnetToBeUsed[0].id
 
-  depends_on = [
-    azurerm_private_dns_zone.discovery_function_app_dns_zone
-  ]
-}
+#   depends_on = [
+#     azurerm_private_dns_zone.discovery_function_app_dns_zone
+#   ]
+# }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_integration" {
   count          = var.use_private_acs == "Y" ? 1 : 0
@@ -237,7 +249,7 @@ resource "null_resource" "function_app_publish" {
   depends_on = [
     azurerm_linux_function_app.discovery_function_app,
     azurerm_private_endpoint.discovery_function_app_private_endpoint,
-    azurerm_private_dns_zone_virtual_network_link.discovery_function_app_private_link,
+    # azurerm_private_dns_zone_virtual_network_link.discovery_function_app_private_link,
     azurerm_app_service_virtual_network_swift_connection.outbound_vnet_integration,
     local.publish_code_command
   ]
