@@ -164,18 +164,6 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
     application_stack {
       python_version = "3.9"
     }
-    ip_restriction {
-      action                    = "Allow"
-      name                      = "https"
-      priority                  = "310"
-      virtual_network_subnet_id = data.azurerm_subnet.azure_subnet_name[0].id
-    }
-    scm_ip_restriction {
-      action                    = "Allow"
-      name                      = "https"
-      priority                  = "310"
-      virtual_network_subnet_id = data.azurerm_subnet.azure_subnet_name[0].id
-    }
   }
   https_only                  = "true"
   storage_account_name        = azurerm_storage_account.storage_account.name
