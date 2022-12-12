@@ -43,12 +43,6 @@ resource "azurerm_resource_group" "resource_group" {
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
-# resource "azurerm_private_dns_zone" "storage_account_dns_zone" {
-#   count               = var.use_private_acs == "Y" ? 1 : 0
-#   name                = "privatelink.blob.core.windows.net"
-#   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-# }
-
 data "azurerm_private_dns_zone" "storage_account_dns_zone" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "privatelink.blob.core.windows.net"
@@ -100,18 +94,6 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
   ]
 }
 
-# resource "azurerm_private_dns_zone_virtual_network_link" "storage_account_private_link" {
-#   count                 = var.use_private_acs == "Y" ? 1 : 0
-#   name                  = "nasunist${random_id.nac_unique_stack_id.hex}_link"
-#   resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-#   private_dns_zone_name = azurerm_private_dns_zone.storage_account_dns_zone[0].name
-#   virtual_network_id    = data.azurerm_virtual_network.VnetToBeUsed[0].id
-
-#   depends_on = [
-#     azurerm_private_dns_zone.storage_account_dns_zone
-#   ]
-# }
-
 ###### App Insight for: Azure function NAC_Discovery in ACS Resource Group ###############
 resource "azurerm_application_insights" "app_insights" {
   name                = "nasuni-app-insights-${random_id.nac_unique_stack_id.hex}"
@@ -130,12 +112,6 @@ resource "azurerm_service_plan" "app_service_plan" {
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
-# resource "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
-#   count               = var.use_private_acs == "Y" ? 1 : 0
-#   name                = "privatelink.azurewebsites.net"
-#   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-# }
-
 data "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "privatelink.azurewebsites.net"
@@ -163,6 +139,18 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
     }
     application_stack {
       python_version = "3.9"
+    }
+    ip_restriction {
+      action                    = "Allow"
+      name                      = "https"
+      priority                  = "310"
+      virtual_network_subnet_id = data.azurerm_subnet.azure_subnet_name[0].id
+    }
+    scm_ip_restriction {
+      action                    = "Allow"
+      name                      = "https"
+      priority                  = "310"
+      virtual_network_subnet_id = data.azurerm_subnet.azure_subnet_name[0].id
     }
   }
   https_only                  = "true"
@@ -202,18 +190,6 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   ]
 }
 
-# resource "azurerm_private_dns_zone_virtual_network_link" "discovery_function_app_private_link" {
-#   count                 = var.use_private_acs == "Y" ? 1 : 0
-#   name                  = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}_link"
-#   resource_group_name   = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-#   private_dns_zone_name = azurerm_private_dns_zone.discovery_function_app_dns_zone[0].name
-#   virtual_network_id    = data.azurerm_virtual_network.VnetToBeUsed[0].id
-
-#   depends_on = [
-#     azurerm_private_dns_zone.discovery_function_app_dns_zone
-#   ]
-# }
-
 resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_integration" {
   count          = var.use_private_acs == "Y" ? 1 : 0
   app_service_id = azurerm_linux_function_app.discovery_function_app.id
@@ -232,7 +208,7 @@ locals {
 ###### Publish : NAC_Discovery Function ###############
 resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
-    command = "sleep 15"
+    command = var.use_private_acs == "Y" ? "sleep 15" : ""
   }
   provisioner "local-exec" {
     command = local.publish_code_command
@@ -240,7 +216,6 @@ resource "null_resource" "function_app_publish" {
   depends_on = [
     azurerm_linux_function_app.discovery_function_app,
     azurerm_private_endpoint.discovery_function_app_private_endpoint,
-    # azurerm_private_dns_zone_virtual_network_link.discovery_function_app_private_link,
     azurerm_app_service_virtual_network_swift_connection.outbound_vnet_integration,
     local.publish_code_command
   ]
@@ -313,7 +288,7 @@ resource "azurerm_app_configuration_key" "unifs-toc-handle" {
 
 resource "null_resource" "run_discovery_function" {
   provisioner "local-exec" {
-    command = "sleep 150"
+    command = var.use_private_acs == "Y" ? "sleep 150" : "sleep 15"
   }
   provisioner "local-exec" {
     command = "curl -X GET 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction' -H 'Content-Type:application/json'"
