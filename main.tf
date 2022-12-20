@@ -29,17 +29,58 @@ data "azurerm_subnet" "azure_subnet_name" {
   resource_group_name  = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
 }
 
-data "azurerm_subnet" "azure_outbound_subnet_name" {
+resource "azurerm_subnet" "azure_outbound_subnet_name" {
   count                = var.use_private_acs == "Y" ? 1 : 0
-  name                 = var.user_outbound_subnet_name
+  name                 = "outbound-vnetSubnet-${random_id.nac_unique_stack_id.hex}"
   virtual_network_name = data.azurerm_virtual_network.VnetToBeUsed[0].name
   resource_group_name  = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
+  address_prefixes     = [var.user_outbound_subnet_name]
+  delegation {
+    name = "serverFarms_delegation"
+
+    service_delegation {
+      name = "Microsoft.Web/serverFarms"
+    }
+  }
+}
+
+resource "azurerm_subnet" "nac_subnet" {
+  count                = length(var.nac_snet)
+  name                 = "vnetSubnet-${count.index}"
+  resource_group_name  = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
+  virtual_network_name = data.azurerm_virtual_network.VnetToBeUsed[0].name
+  address_prefixes     = [var.nac_snet[count.index]]
+
+  delegation {
+    name = "serverFarms_delegation"
+
+    service_delegation {
+      name = "Microsoft.Web/serverFarms"
+    }
+  }
+}
+
+resource "null_resource" "update_subnet_name" {
+  count = length(var.nac_snet)
+  provisioner "local-exec" {
+    command = "echo \"vnetSubnetName-${count.index}: \"${azurerm_subnet.nac_subnet[count.index].name} >> config.dat"
+  }
+  depends_on = [
+    azurerm_subnet.nac_subnet
+  ]
+  triggers = {
+    input_json = var.nac_snet[count.index]
+  }
 }
 
 resource "azurerm_resource_group" "resource_group" {
   ### Purpose: Function APP - NAC_Discovery function - Storage Accont for Function 
   name     = var.acs_resource_group
   location = var.azure_location
+  depends_on = [
+    azurerm_subnet.azure_outbound_subnet_name,
+    null_resource.update_subnet_name
+  ]
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
@@ -193,7 +234,7 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
 resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_integration" {
   count          = var.use_private_acs == "Y" ? 1 : 0
   app_service_id = azurerm_linux_function_app.discovery_function_app.id
-  subnet_id      = data.azurerm_subnet.azure_outbound_subnet_name[0].id
+  subnet_id      = azurerm_subnet.azure_outbound_subnet_name[0].id
 
   depends_on = [
     azurerm_linux_function_app.discovery_function_app
@@ -310,7 +351,8 @@ resource "null_resource" "provision_nac" {
     command = "sh nac-auth.sh"
   }
   depends_on = [
-    null_resource.run_discovery_function
+    null_resource.run_discovery_function,
+    null_resource.update_subnet_name
   ]
 }
 

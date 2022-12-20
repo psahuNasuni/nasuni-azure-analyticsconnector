@@ -75,3 +75,8 @@ variable "user_outbound_subnet_name" {
   type        = string
   default     = ""
 }
+
+variable "nac_snet" {
+  description = "Subnet range from Virtual Network for NAC Deployment"
+  type        = list(string)
+}
