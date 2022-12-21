@@ -70,13 +70,13 @@ variable "use_private_acs" {
   default     = "N"
 }
 
-variable "user_outbound_subnet_name" {
+variable "discovery_outbound_subnet" {
   description = "Available subnet name in Virtual Network"
   type        = string
   default     = ""
 }
 
-variable "nac_snet" {
+variable "nac_subnet" {
   description = "Subnet range from Virtual Network for NAC Deployment"
   type        = list(string)
 }
