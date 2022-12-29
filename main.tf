@@ -265,9 +265,9 @@ resource "null_resource" "function_app_publish" {
     publish_code_command = local.publish_code_command
   }
 }
-########## END ::: Provision NAC_Discovery Function  #################
+########## END ::: Provision NAC_Discovery Function  ##########
 
-########## START : Set Environmental Variable to NAC Discovery Function ###########################
+########## START : Set Environmental Variable to NAC Discovery Function ##########
 resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
     command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
@@ -276,9 +276,9 @@ resource "null_resource" "set_env_variable" {
     null_resource.function_app_publish
   ]
 }
-########## END : Set Environmental Variable to NAC Discovery Function ###########################
+########## END : Set Environmental Variable to NAC Discovery Function ##########
 
-########### START : Create and Update App Configuration  ###########################
+########### START : Create and Update App Configuration  #######################
 
 resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
