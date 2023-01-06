@@ -77,10 +77,6 @@ resource "azurerm_resource_group" "resource_group" {
   ### Purpose: Function APP - NAC_Discovery function - Storage Accont for Function 
   name     = var.acs_resource_group
   location = var.azure_location
-  depends_on = [
-    azurerm_subnet.discovery_outbound_subnet_name,
-    null_resource.update_subnet_name
-  ]
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
