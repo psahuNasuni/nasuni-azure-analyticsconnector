@@ -72,7 +72,7 @@ variable "use_private_acs" {
 
 variable "discovery_outbound_subnet" {
   description = "Available subnet name in Virtual Network"
-  type        = string
+  type        = list(string)
 }
 
 variable "nac_subnet" {
