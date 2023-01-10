@@ -34,7 +34,7 @@ resource "azurerm_subnet" "discovery_outbound_subnet_name" {
   name                 = "outbound-vnetSubnet-${random_id.nac_unique_stack_id.hex}"
   virtual_network_name = data.azurerm_virtual_network.VnetToBeUsed[0].name
   resource_group_name  = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
-  address_prefixes     = [var.discovery_outbound_subnet]
+  address_prefixes     = [var.discovery_outbound_subnet[0]]
   delegation {
     name = "serverFarms_delegation"
 
