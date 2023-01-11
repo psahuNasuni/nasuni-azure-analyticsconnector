@@ -161,9 +161,9 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
   location            = azurerm_resource_group.resource_group.location
   service_plan_id     = azurerm_service_plan.app_service_plan.id
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE"    = "1",
-    "FUNCTIONS_WORKER_RUNTIME"    = "python",
-    "AzureWebJobsDisableHomepage" = "false"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true",
+    "FUNCTIONS_WORKER_RUNTIME"       = "python",
+    "AzureWebJobsDisableHomepage"    = "false"
   }
   identity {
     type = "SystemAssigned"
@@ -239,7 +239,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
 
 ##### Locals: used for publishing NAC_Discovery Function ###############
 locals {
-  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --src ${var.output_path}"
+  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --build-remote true --src ${var.output_path}"
 }
 
 ###### Publish : NAC_Discovery Function ###############
