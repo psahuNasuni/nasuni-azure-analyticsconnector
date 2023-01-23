@@ -1,4 +1,4 @@
-#!/bin/bash/
+#!/bin/bash
 rm -rf /usr/local/bin/config.dat
 pwd
 ls
