@@ -341,7 +341,7 @@ resource "null_resource" "run_discovery_function" {
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command = "sh nac-auth.sh"
+    command = "./nac-auth.sh"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
