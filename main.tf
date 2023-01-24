@@ -349,6 +349,15 @@ resource "null_resource" "provision_nac" {
     null_resource.update_subnet_name
   ]
 }
+resource "null_resource" "dos2unix" {
+  provisioner "local-exec" {
+    command = "dos2unix ./nac-auth.sh"
+    interpreter = ["/bin/bash", "-c"]
+  }
+  depends_on = [
+    null_resource.provision_nac
+  ]
+}
 
 ########### END : Provision NAC ###########################
 
