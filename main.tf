@@ -338,6 +338,12 @@ resource "null_resource" "run_discovery_function" {
 ########## END : Run NAC Discovery Function ###########################
 
 ########## START : Provision NAC ###########################
+resource "null_resource" "dos2unix" {
+  provisioner "local-exec" {
+    command = "dos2unix ./nac-auth.sh"
+    interpreter = ["/bin/bash", "-c"]
+  }
+}
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
@@ -346,18 +352,11 @@ resource "null_resource" "provision_nac" {
   }
   depends_on = [
     null_resource.run_discovery_function,
-    null_resource.update_subnet_name
+    null_resource.update_subnet_name,
+    null_resource.dos2unix
   ]
 }
-resource "null_resource" "dos2unix" {
-  provisioner "local-exec" {
-    command = "dos2unix ./nac-auth.sh"
-    interpreter = ["/bin/bash", "-c"]
-  }
-  depends_on = [
-    null_resource.provision_nac
-  ]
-}
+
 
 ########### END : Provision NAC ###########################
 
