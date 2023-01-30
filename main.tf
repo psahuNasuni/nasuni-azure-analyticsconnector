@@ -46,7 +46,7 @@ resource "azurerm_subnet" "discovery_outbound_subnet_name" {
 
 resource "azurerm_subnet" "nac_subnet_name" {
   count                = length(var.nac_subnet)
-  name                 = "vnetSubnet-${count.index}"
+  name                 = "vnetSubnets-${count.index}"
   resource_group_name  = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
   virtual_network_name = data.azurerm_virtual_network.VnetToBeUsed[0].name
   address_prefixes     = [var.nac_subnet[count.index]]
