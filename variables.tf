@@ -28,18 +28,6 @@ variable "web_access_appliance_address" {
   default     = ""
 }
 
-variable "nmc_volume_name" {
-  description = "NMC Volume Name"
-  type        = string
-  default     = ""
-}
-
-variable "unifs_toc_handle" {
-  description = "NMC Unifs TOC Handle"
-  type        = string
-  default     = ""
-}
-
 variable "output_path" {
   type        = string
   description = "function_path of file where zip file is stored"

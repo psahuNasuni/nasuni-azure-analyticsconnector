@@ -295,34 +295,13 @@ resource "azurerm_app_configuration_key" "web-access-appliance-address" {
   ]
 }
 
-resource "azurerm_app_configuration_key" "nmc-volume-name" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "nmc-volume-name"
-  label                  = "nmc-volume-name"
-  value                  = var.nmc_volume_name
-  depends_on = [
-    azurerm_linux_function_app.discovery_function_app,
-    null_resource.set_env_variable
-  ]
-}
-
-resource "azurerm_app_configuration_key" "unifs-toc-handle" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "unifs-toc-handle"
-  label                  = "unifs-toc-handle"
-  value                  = var.unifs_toc_handle
-  depends_on = [
-    azurerm_linux_function_app.discovery_function_app,
-    null_resource.set_env_variable
-  ]
-}
 ########### END : Create and Update App Configuration  ###########################
 
 ########## START : Run NAC Discovery Function ###########################
 
 resource "null_resource" "run_discovery_function" {
   provisioner "local-exec" {
-    command = var.use_private_acs == "Y" ? "sleep 150" : "sleep 15"
+    command = var.use_private_acs == "Y" ? "sleep 120" : "sleep 15"
   }
   provisioner "local-exec" {
     command = "curl -X GET 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction' -H 'Content-Type:application/json'"
@@ -330,9 +309,7 @@ resource "null_resource" "run_discovery_function" {
   depends_on = [
     null_resource.set_env_variable,
     azurerm_app_configuration_key.index-endpoint,
-    azurerm_app_configuration_key.web-access-appliance-address,
-    azurerm_app_configuration_key.nmc-volume-name,
-    azurerm_app_configuration_key.unifs-toc-handle
+    azurerm_app_configuration_key.web-access-appliance-address
   ]
 }
 ########## END : Run NAC Discovery Function ###########################
@@ -340,14 +317,14 @@ resource "null_resource" "run_discovery_function" {
 ########## START : Provision NAC ###########################
 resource "null_resource" "dos2unix" {
   provisioner "local-exec" {
-    command = "dos2unix ./nac-auth.sh"
+    command     = "dos2unix ./nac-auth.sh"
     interpreter = ["/bin/bash", "-c"]
   }
 }
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command = "./nac-auth.sh"
+    command     = "./nac-auth.sh"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
