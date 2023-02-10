@@ -10,12 +10,6 @@ variable "acs_resource_group" {
   default     = "nasuni-labs-acs-rg"
 }
 
-variable "azure_location" {
-  description = "Region for Azure Cognitive Search"
-  type        = string
-  default     = ""
-}
-
 variable "acs_admin_app_config_name" {
   description = "Azure acs_admin_app_config_name"
   type        = string

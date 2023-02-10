@@ -73,10 +73,9 @@ resource "null_resource" "update_subnet_name" {
   }
 }
 
-resource "azurerm_resource_group" "resource_group" {
+data "azurerm_resource_group" "resource_group" {
   ### Purpose: Function APP - NAC_Discovery function - Storage Accont for Function 
-  name     = var.acs_resource_group
-  location = var.azure_location
+  name = var.acs_resource_group
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
@@ -88,8 +87,8 @@ data "azurerm_private_dns_zone" "storage_account_dns_zone" {
 
 resource "azurerm_storage_account" "storage_account" {
   name                     = "nasunist${random_id.nac_unique_stack_id.hex}"
-  resource_group_name      = azurerm_resource_group.resource_group.name
-  location                 = azurerm_resource_group.resource_group.location
+  resource_group_name      = data.azurerm_resource_group.resource_group.name
+  location                 = data.azurerm_resource_group.resource_group.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
@@ -134,16 +133,16 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
 ###### App Insight for: Azure function NAC_Discovery in ACS Resource Group ###############
 resource "azurerm_application_insights" "app_insights" {
   name                = "nasuni-app-insights-${random_id.nac_unique_stack_id.hex}"
-  resource_group_name = azurerm_resource_group.resource_group.name
-  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  location            = data.azurerm_resource_group.resource_group.location
   application_type    = "web"
 }
 
 ###### App Service Plan for: Azure function NAC_Discovery in ACS Resource Group ###############
 resource "azurerm_service_plan" "app_service_plan" {
   name                = "nasuni-app-service-plan-${random_id.nac_unique_stack_id.hex}"
-  resource_group_name = azurerm_resource_group.resource_group.name
-  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  location            = data.azurerm_resource_group.resource_group.location
   os_type             = "Linux"
   sku_name            = "EP1"
 }
@@ -157,8 +156,8 @@ data "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
 
 resource "azurerm_linux_function_app" "discovery_function_app" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
-  resource_group_name = azurerm_resource_group.resource_group.name
-  location            = azurerm_resource_group.resource_group.location
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  location            = data.azurerm_resource_group.resource_group.location
   service_plan_id     = azurerm_service_plan.app_service_plan.id
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true",
@@ -239,7 +238,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
 
 ##### Locals: used for publishing NAC_Discovery Function ###############
 locals {
-  publish_code_command = "az functionapp deployment source config-zip -g ${azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --build-remote true --src ${var.output_path}"
+  publish_code_command = "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --build-remote true --src ${var.output_path}"
 }
 
 ###### Publish : NAC_Discovery Function ###############
@@ -263,7 +262,7 @@ resource "null_resource" "function_app_publish" {
 ########## START : Set Environmental Variable to NAC Discovery Function ##########
 resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
+    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
   }
   depends_on = [
     null_resource.function_app_publish
