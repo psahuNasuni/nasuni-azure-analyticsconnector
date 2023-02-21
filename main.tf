@@ -123,6 +123,10 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
     subresource_names              = ["blob"]
   }
 
+  provisioner "local-exec" {
+    command = "az resource wait --updated --ids ${self.subnet_id}"
+  }
+
   depends_on = [
     data.azurerm_private_dns_zone.storage_account_dns_zone,
     azurerm_storage_account.storage_account,
