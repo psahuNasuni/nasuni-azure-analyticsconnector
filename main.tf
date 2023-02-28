@@ -128,6 +128,7 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
   }
 
   depends_on = [
+    data.azurerm_subnet.azure_subnet_name,
     data.azurerm_private_dns_zone.storage_account_dns_zone,
     azurerm_storage_account.storage_account,
     null_resource.disable_storage_public_access
@@ -224,7 +225,12 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
     subresource_names              = ["sites"]
   }
 
+  provisioner "local-exec" {
+    command = "az resource wait --updated --ids ${self.subnet_id}"
+  }
+
   depends_on = [
+    data.azurerm_subnet.azure_subnet_name,
     data.azurerm_private_dns_zone.discovery_function_app_dns_zone,
     azurerm_linux_function_app.discovery_function_app
   ]
