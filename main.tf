@@ -1,5 +1,10 @@
 data "azurerm_client_config" "current" {}
 
+data "azurerm_resource_group" "resource_group" {
+  ### Purpose: Function APP - NAC_Discovery function - Storage Accont for Function 
+  name = var.acs_resource_group
+}
+
 data "azurerm_app_configuration" "appconf" {
   name                = var.acs_admin_app_config_name
   resource_group_name = var.acs_resource_group
@@ -58,6 +63,10 @@ resource "azurerm_subnet" "nac_subnet_name" {
       name = "Microsoft.Web/serverFarms"
     }
   }
+
+  depends_on = [
+    azurerm_subnet.discovery_outbound_subnet_name
+  ]
 }
 
 resource "null_resource" "update_subnet_name" {
@@ -71,11 +80,6 @@ resource "null_resource" "update_subnet_name" {
   triggers = {
     input_json = var.nac_subnet[count.index]
   }
-}
-
-data "azurerm_resource_group" "resource_group" {
-  ### Purpose: Function APP - NAC_Discovery function - Storage Accont for Function 
-  name = var.acs_resource_group
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
@@ -93,6 +97,7 @@ resource "azurerm_storage_account" "storage_account" {
   account_replication_type = "LRS"
 
   depends_on = [
+    null_resource.update_subnet_name,
     data.azurerm_private_dns_zone.storage_account_dns_zone
   ]
 }
@@ -128,9 +133,8 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
   }
 
   depends_on = [
+    data.azurerm_virtual_network.VnetToBeUsed,
     data.azurerm_subnet.azure_subnet_name,
-    data.azurerm_private_dns_zone.storage_account_dns_zone,
-    azurerm_storage_account.storage_account,
     null_resource.disable_storage_public_access
   ]
 }
@@ -199,9 +203,9 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
   storage_account_access_key  = azurerm_storage_account.storage_account.primary_access_key
   functions_extension_version = "~4"
   depends_on = [
-    azurerm_storage_account.storage_account,
     azurerm_private_endpoint.storage_account_private_endpoint,
     azurerm_service_plan.app_service_plan,
+    azurerm_application_insights.app_insights,
     data.azurerm_private_dns_zone.discovery_function_app_dns_zone
   ]
 }
@@ -230,8 +234,6 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   }
 
   depends_on = [
-    data.azurerm_subnet.azure_subnet_name,
-    data.azurerm_private_dns_zone.discovery_function_app_dns_zone,
     azurerm_linux_function_app.discovery_function_app
   ]
 }
@@ -242,7 +244,8 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
   subnet_id      = azurerm_subnet.discovery_outbound_subnet_name[0].id
 
   depends_on = [
-    azurerm_linux_function_app.discovery_function_app
+    azurerm_subnet.discovery_outbound_subnet_name,
+    azurerm_private_endpoint.discovery_function_app_private_endpoint
   ]
 }
 
@@ -257,8 +260,6 @@ resource "null_resource" "function_app_publish" {
     command = local.publish_code_command
   }
   depends_on = [
-    azurerm_linux_function_app.discovery_function_app,
-    azurerm_private_endpoint.discovery_function_app_private_endpoint,
     azurerm_app_service_virtual_network_swift_connection.outbound_vnet_integration,
     local.publish_code_command
   ]
@@ -281,6 +282,15 @@ resource "null_resource" "set_env_variable" {
 ########## END : Set Environmental Variable to NAC Discovery Function ##########
 
 ########### START : Create and Update App Configuration  #######################
+resource "azurerm_app_configuration_key" "web-access-appliance-address" {
+  configuration_store_id = data.azurerm_app_configuration.appconf.id
+  key                    = "web-access-appliance-address"
+  label                  = "web-access-appliance-address"
+  value                  = var.web_access_appliance_address
+  depends_on = [
+    data.azurerm_app_configuration.appconf
+  ]
+}
 
 resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
@@ -288,18 +298,7 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
   label                  = "index-endpoint"
   value                  = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
   depends_on = [
-    azurerm_linux_function_app.discovery_function_app,
-    null_resource.set_env_variable
-  ]
-}
-
-resource "azurerm_app_configuration_key" "web-access-appliance-address" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "web-access-appliance-address"
-  label                  = "web-access-appliance-address"
-  value                  = var.web_access_appliance_address
-  depends_on = [
-    azurerm_linux_function_app.discovery_function_app,
+    azurerm_app_configuration_key.web-access-appliance-address,
     null_resource.set_env_variable
   ]
 }
@@ -316,9 +315,7 @@ resource "null_resource" "run_discovery_function" {
     command = "curl -X GET 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction' -H 'Content-Type:application/json'"
   }
   depends_on = [
-    null_resource.set_env_variable,
-    azurerm_app_configuration_key.index-endpoint,
-    azurerm_app_configuration_key.web-access-appliance-address
+    azurerm_app_configuration_key.index-endpoint
   ]
 }
 ########## END : Run NAC Discovery Function ###########################
@@ -337,9 +334,8 @@ resource "null_resource" "provision_nac" {
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
-    null_resource.run_discovery_function,
-    null_resource.update_subnet_name,
-    null_resource.dos2unix
+    null_resource.dos2unix,
+    null_resource.run_discovery_function
   ]
 }
 
