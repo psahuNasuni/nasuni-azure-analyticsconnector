@@ -10,12 +10,6 @@ variable "acs_resource_group" {
   default     = "nasuni-labs-acs-rg"
 }
 
-variable "azure_location" {
-  description = "Region for Azure Cognitive Search"
-  type        = string
-  default     = ""
-}
-
 variable "acs_admin_app_config_name" {
   description = "Azure acs_admin_app_config_name"
   type        = string
@@ -24,18 +18,6 @@ variable "acs_admin_app_config_name" {
 
 variable "web_access_appliance_address" {
   description = "Azure Web access appliance address"
-  type        = string
-  default     = ""
-}
-
-variable "nmc_volume_name" {
-  description = "NMC Volume Name"
-  type        = string
-  default     = ""
-}
-
-variable "unifs_toc_handle" {
-  description = "NMC Unifs TOC Handle"
   type        = string
   default     = ""
 }
@@ -70,8 +52,12 @@ variable "use_private_acs" {
   default     = "N"
 }
 
-variable "user_outbound_subnet_name" {
+variable "discovery_outbound_subnet" {
   description = "Available subnet name in Virtual Network"
-  type        = string
-  default     = ""
+  type        = list(string)
+}
+
+variable "nac_subnet" {
+  description = "Subnet range from Virtual Network for NAC Deployment"
+  type        = list(string)
 }
