@@ -6,7 +6,7 @@ import ssl, os
 import sys,logging
 from datetime import *
 import boto3
-AWS_SECRET_ACCESS_KEY = "AHJUAXPZQIOPT536Q7P8"
+
 if len(sys.argv) < 7:
     print(
         'Usage -- python3 fetch_nmc_api_23-8.py <ip_address> <username> <password> <volume_name> <rid> <web_access_appliance_address>')
