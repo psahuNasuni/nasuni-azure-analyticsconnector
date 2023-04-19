@@ -23,7 +23,7 @@ do
         n=$((n+1)) 
         echo "INFO ::: Attempt $n :: Could not execute NAC Discovery Function :: ${NAC_DISCOVERY_FUNCTION_APP} :: Re-trying . . . . . "
         if [ $n -ne 5 ]; then
-            sleep 60
+            sleep 75
         fi 
     fi
 done
