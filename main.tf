@@ -316,28 +316,6 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
   ]
 }
 
-resource "azurerm_app_configuration_key" "destination-container-name" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "destination-container-name"
-  label                  = "destination-container-name"
-  value                  = var.destination_container_name
-
-  depends_on = [
-    azurerm_app_configuration_key.index-endpoint
-  ]
-}
-
-resource "azurerm_app_configuration_key" "datasource-connection-string" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "datasource-connection-string"
-  label                  = "datasource-connection-string"
-  value                  = var.datasource_connection_string
-
-  depends_on = [
-    azurerm_app_configuration_key.destination-container-name
-  ]
-}
-
 ########### END : Create and Update App Configuration  ###########################
 
 ########## START : Provision NAC ###########################
@@ -348,7 +326,7 @@ resource "null_resource" "dos2unix" {
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
-    azurerm_app_configuration_key.datasource-connection-string
+    azurerm_app_configuration_key.index-endpoint
   ]
 }
 
