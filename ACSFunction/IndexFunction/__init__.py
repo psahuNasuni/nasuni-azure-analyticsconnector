@@ -163,14 +163,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "sortable": "true"
             },
             {
-                "name": "content",
-                "type": "Edm.String",
-                "sortable": "false",
-                "searchable": "true",
-                "filterable": "false",
-                "facetable": "false"
-            },
-            {
                 "name": "languageCode",
                 "type": "Edm.String",
                 "searchable": "true",
@@ -239,10 +231,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 {"name": "base64Encode"}
             },
             {
-                "sourceFieldName": "content",
-                "targetFieldName": "content"
-            },
-            {
                 "sourceFieldName": "metadata_storage_name",
                 "targetFieldName": "file_location"
             },
@@ -276,8 +264,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "maxFailedItemsPerBatch": 0,
             "configuration":
             {
-                "dataToExtract": "contentAndMetadata",
-                "imageAction": "generateNormalizedImages",
+                "dataToExtract": "allMetadata",
                 "executionEnvironment": "private"
             }
         }
