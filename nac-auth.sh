@@ -1,5 +1,6 @@
 #!/bin/bash
 NAC_DISCOVERY_FUNCTION_APP="$1"
+echo "curl -X GET 'https://${NAC_DISCOVERY_FUNCTION_APP}/api/IndexFunction' -H 'Content-Type:application/json'"
 n=0
 until [ "$n" -ge 5 ]
 do
@@ -22,7 +23,7 @@ do
         n=$((n+1)) 
         echo "INFO ::: Attempt $n :: Could not execute NAC Discovery Function :: ${NAC_DISCOVERY_FUNCTION_APP} :: Re-trying . . . . . "
         if [ $n -ne 5 ]; then
-            sleep 30
+            sleep 60
         fi 
     fi
 done
