@@ -332,7 +332,7 @@ resource "null_resource" "dos2unix" {
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command     = "./nac-auth.sh azurerm_linux_function_app.discovery_function_app.default_hostname"
+    command     = "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app.default_hostname}"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
