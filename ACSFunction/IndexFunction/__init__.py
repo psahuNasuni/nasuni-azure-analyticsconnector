@@ -191,8 +191,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
-                "sortable": "true",
-                "analyzer": "partial_text_analyzer"
+                "sortable": "true"
             },
             {
                 "name": "toc_handle",
@@ -201,36 +200,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
-                "sortable": "true",
-                "analyzer": "partial_text_analyzer"
+                "sortable": "true"
             },
             {
                 "name": "volume_name",
                 "type": "Edm.String",
                 "searchable": "true",
                 "filterable": "true",
-                "facetable": "false",
-                "analyzer": "partial_text_analyzer"
-            }
-        ],
-        "analyzers": [
-            {
-            "@odata.type":"#Microsoft.Azure.Search.CustomAnalyzer",
-            "name":"partial_text_analyzer",
-            "charFilters":[],
-            "tokenizer":"keyword_v2",
-            "tokenFilters":["lowercase", "my_edgeNGram"]
-            }
-        ],
-        "tokenizers":[],
-        "charFilters": [],
-        "tokenFilters": [
-            {
-            "@odata.type":"#Microsoft.Azure.Search.EdgeNGramTokenFilterV2",
-            "name":"my_edgeNGram",
-            "minGram": 2,
-            "maxGram": 25,
-            "side": "front"
+                "facetable": "false"
             }
         ]
     }
