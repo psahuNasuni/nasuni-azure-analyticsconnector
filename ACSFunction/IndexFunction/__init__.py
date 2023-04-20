@@ -216,6 +216,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "analyzers":[
             {
                 "name":"partial_text_analyzer",
+                "@odata.type":"#Microsoft.Azure.Search.CustomAnalyzer",
                 "tokenizer":"edgeNGram",
                 "tokenFilters":[
                     "lowercase"
