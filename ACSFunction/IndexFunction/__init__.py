@@ -163,14 +163,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "sortable": "true"
             },
             {
-                "name": "content",
-                "type": "Edm.String",
-                "sortable": "false",
-                "searchable": "true",
-                "filterable": "false",
-                "facetable": "false"
-            },
-            {
                 "name": "languageCode",
                 "type": "Edm.String",
                 "searchable": "true",
@@ -196,7 +188,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "name": "file_location",
                 "type": "Edm.String",
                 "searchable": "true",
-                "filterable": "false",
+                "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
                 "sortable": "true"
@@ -204,8 +196,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "name": "toc_handle",
                 "type": "Edm.String",
-                "searchable": "false",
-                "filterable": "false",
+                "searchable": "true",
+                "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
                 "sortable": "true"
@@ -213,7 +205,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "name": "volume_name",
                 "type": "Edm.String",
-                "searchable": "false",
+                "searchable": "true",
                 "filterable": "true",
                 "facetable": "false"
             }
@@ -237,10 +229,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "targetFieldName": "id",
                 "mappingFunction":
                 {"name": "base64Encode"}
-            },
-            {
-                "sourceFieldName": "content",
-                "targetFieldName": "content"
             },
             {
                 "sourceFieldName": "metadata_storage_name",
@@ -276,8 +264,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "maxFailedItemsPerBatch": 0,
             "configuration":
             {
-                "dataToExtract": "contentAndMetadata",
-                "imageAction": "generateNormalizedImages",
+                "dataToExtract": "allMetadata",
                 "executionEnvironment": "private"
             }
         }

@@ -61,3 +61,15 @@ variable "nac_subnet" {
   description = "Subnet range from Virtual Network for NAC Deployment"
   type        = list(string)
 }
+
+variable "datasource_connection_string" {
+  description = "Destination Storage Account Connection Stringe"
+  type        = string
+  default     = ""
+}
+
+variable "destination_container_name" {
+  description = "Destination Storage Account Container Name"
+  type        = string
+  default     = ""
+}

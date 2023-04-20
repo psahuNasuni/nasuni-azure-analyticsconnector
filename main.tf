@@ -11,6 +11,7 @@ data "azurerm_app_configuration" "appconf" {
 }
 
 ########## START ::: Provision NAC_Discovery Function  #################
+
 resource "random_id" "nac_unique_stack_id" {
   byte_length = 4
 }
@@ -83,6 +84,7 @@ resource "null_resource" "update_subnet_name" {
 }
 
 ###### Storage Account for: Azure function NAC_Discovery in ACS Resource Group ###############
+
 data "azurerm_private_dns_zone" "storage_account_dns_zone" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "privatelink.blob.core.windows.net"
@@ -140,6 +142,7 @@ resource "azurerm_private_endpoint" "storage_account_private_endpoint" {
 }
 
 ###### App Insight for: Azure function NAC_Discovery in ACS Resource Group ###############
+
 resource "azurerm_application_insights" "app_insights" {
   name                = "nasuni-app-insights-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
@@ -148,6 +151,7 @@ resource "azurerm_application_insights" "app_insights" {
 }
 
 ###### App Service Plan for: Azure function NAC_Discovery in ACS Resource Group ###############
+
 resource "azurerm_service_plan" "app_service_plan" {
   name                = "nasuni-app-service-plan-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
@@ -157,6 +161,7 @@ resource "azurerm_service_plan" "app_service_plan" {
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
+
 data "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "privatelink.azurewebsites.net"
@@ -250,6 +255,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
 }
 
 ##### Locals: used for publishing NAC_Discovery Function ###############
+
 locals {
   publish_code_command = "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --build-remote true --src ${var.output_path}"
 }
@@ -271,9 +277,11 @@ resource "null_resource" "function_app_publish" {
     publish_code_command = local.publish_code_command
   }
 }
+
 ########## END ::: Provision NAC_Discovery Function  ##########
 
 ########## START : Set Environmental Variable to NAC Discovery Function ##########
+
 resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
     command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
@@ -282,16 +290,19 @@ resource "null_resource" "set_env_variable" {
     null_resource.function_app_publish
   ]
 }
+
 ########## END : Set Environmental Variable to NAC Discovery Function ##########
 
 ########### START : Create and Update App Configuration  #######################
+
 resource "azurerm_app_configuration_key" "web-access-appliance-address" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
   key                    = "web-access-appliance-address"
   label                  = "web-access-appliance-address"
   value                  = var.web_access_appliance_address
   depends_on = [
-    data.azurerm_app_configuration.appconf
+    data.azurerm_app_configuration.appconf,
+    null_resource.set_env_variable
   ]
 }
 
@@ -301,47 +312,33 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
   label                  = "index-endpoint"
   value                  = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
   depends_on = [
-    azurerm_app_configuration_key.web-access-appliance-address,
-    null_resource.set_env_variable
+    azurerm_app_configuration_key.web-access-appliance-address
   ]
 }
 
 ########### END : Create and Update App Configuration  ###########################
 
-########## START : Run NAC Discovery Function ###########################
-
-resource "null_resource" "run_discovery_function" {
-  provisioner "local-exec" {
-    command = var.use_private_acs == "Y" ? "sleep 120" : "sleep 15"
-  }
-  provisioner "local-exec" {
-    command = "curl -X GET 'https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction' -H 'Content-Type:application/json'"
-  }
-  depends_on = [
-    azurerm_app_configuration_key.index-endpoint
-  ]
-}
-########## END : Run NAC Discovery Function ###########################
-
 ########## START : Provision NAC ###########################
+
 resource "null_resource" "dos2unix" {
   provisioner "local-exec" {
     command     = "dos2unix ./nac-auth.sh"
     interpreter = ["/bin/bash", "-c"]
   }
+  depends_on = [
+    azurerm_app_configuration_key.index-endpoint
+  ]
 }
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command     = "./nac-auth.sh"
+    command     = "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app.default_hostname}"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
-    null_resource.dos2unix,
-    null_resource.run_discovery_function
+    null_resource.dos2unix
   ]
 }
-
 
 ########### END : Provision NAC ###########################
 
