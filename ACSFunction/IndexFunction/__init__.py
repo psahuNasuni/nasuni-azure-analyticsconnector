@@ -161,6 +161,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "false",
                 "facetable": "false",
                 "sortable": "true"
+                "analyzer": "partial_text_analyzer"
             },
             {
                 "name": "languageCode",
@@ -188,26 +189,38 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "name": "file_location",
                 "type": "Edm.String",
                 "searchable": "true",
-                "filterable": "false",
+                "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
                 "sortable": "true"
+                "analyzer": "partial_text_analyzer"
             },
             {
                 "name": "toc_handle",
                 "type": "Edm.String",
-                "searchable": "false",
-                "filterable": "false",
+                "searchable": "true",
+                "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
                 "sortable": "true"
+                "analyzer": "partial_text_analyzer"
             },
             {
                 "name": "volume_name",
                 "type": "Edm.String",
-                "searchable": "false",
+                "searchable": "true",
                 "filterable": "true",
                 "facetable": "false"
+                "analyzer": "partial_text_analyzer"
+            }
+        ],
+        "analyzers":[
+            {
+                "name":"partial_text_analyzer",
+                "tokenizer":"edgeNGram",
+                "tokenFilters":[
+                    "lowercase"
+                ]
             }
         ]
     }
