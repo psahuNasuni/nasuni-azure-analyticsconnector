@@ -161,7 +161,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "false",
                 "facetable": "false",
                 "sortable": "true"
-                "analyzer": "partial_text_analyzer"
             },
             {
                 "name": "languageCode",
@@ -192,7 +191,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
-                "sortable": "true"
+                "sortable": "true",
                 "analyzer": "partial_text_analyzer"
             },
             {
@@ -202,7 +201,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true",
-                "sortable": "true"
+                "sortable": "true",
                 "analyzer": "partial_text_analyzer"
             },
             {
@@ -210,7 +209,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "type": "Edm.String",
                 "searchable": "true",
                 "filterable": "true",
-                "facetable": "false"
+                "facetable": "false",
                 "analyzer": "partial_text_analyzer"
             }
         ],
