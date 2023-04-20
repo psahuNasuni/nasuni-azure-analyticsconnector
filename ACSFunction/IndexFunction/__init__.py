@@ -213,14 +213,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "analyzer": "partial_text_analyzer"
             }
         ],
-        "analyzers":[
+        "analyzers": [
             {
-                "name":"partial_text_analyzer",
-                "@odata.type":"#Microsoft.Azure.Search.CustomAnalyzer",
-                "tokenizer":"edgeNGram",
-                "tokenFilters":[
-                    "lowercase"
-                ]
+            "@odata.type":"#Microsoft.Azure.Search.CustomAnalyzer",
+            "name":"partial_text_analyzer",
+            "charFilters":[],
+            "tokenizer":"keyword_v2",
+            "tokenFilters":["lowercase", "my_edgeNGram"]
+            }
+        ],
+        "tokenizers":[],
+        "charFilters": [],
+        "tokenFilters": [
+            {
+            "@odata.type":"#Microsoft.Azure.Search.EdgeNGramTokenFilterV2",
+            "name":"my_edgeNGram",
+            "minGram": 2,
+            "maxGram": 25,
+            "side": "front"
             }
         ]
     }
