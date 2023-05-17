@@ -28,7 +28,7 @@ variable "output_path" {
   default     = "./ACSFunction.zip"
 }
 
-variable "user_resource_group_name" {
+variable "networking_resource_group" {
   description = "Resouce group name for Azure Function"
   type        = string
   default     = ""
