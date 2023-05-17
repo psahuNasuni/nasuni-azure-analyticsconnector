@@ -14,11 +14,11 @@ do
         mv $connector_location/config.dat /usr/local/bin/
         echo "INFO ::: Encrypting config.dat file : START"
         #### Commented below line for UNit Testing 
-        nac_manager encrypt -c config.dat -p pass@123456
+        #nac_manager encrypt -c config.dat -p pass@123456
         echo "INFO ::: Encrypting config.dat file : END"
         echo "INFO ::: NAC Deployment : STARTED ........."
         #### Commented below line for UNit Testing 
-        nac_manager deploy -c config.dat -p pass@123456
+        #nac_manager deploy -c config.dat -p pass@123456
         echo "INFO ::: NAC Deployment : COMPLETED !!!"
         break
     else
