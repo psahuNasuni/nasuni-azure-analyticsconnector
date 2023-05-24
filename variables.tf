@@ -28,7 +28,7 @@ variable "output_path" {
   default     = "./ACSFunction.zip"
 }
 
-variable "user_resource_group_name" {
+variable "networking_resource_group" {
   description = "Resouce group name for Azure Function"
   type        = string
   default     = ""
@@ -62,4 +62,16 @@ variable "nac_subnet" {
   description = "Subnet range from Virtual Network for NAC Deployment"
   type        = list(string)
   default     = [""]
+}
+
+variable "datasource_connection_string" {
+  description = "Destination Storage Account Connection Stringe"
+  type        = string
+  default     = ""
+}
+
+variable "destination_container_name" {
+  description = "Destination Storage Account Container Name"
+  type        = string
+  default     = ""
 }

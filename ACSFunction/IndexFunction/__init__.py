@@ -168,7 +168,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "sortable": "false",
                 "searchable": "true",
                 "filterable": "false",
-                "facetable": "false"
+                "facetable": "false",
+                "retrievable": "true"
             },
             {
                 "name": "languageCode",
@@ -215,7 +216,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "type": "Edm.String",
                 "searchable": "false",
                 "filterable": "true",
-                "facetable": "false"
+                "facetable": "false",
+                "retrievable": "true"
             }
         ]
     }

@@ -25,7 +25,7 @@ data "archive_file" "test" {
 data "azurerm_virtual_network" "VnetToBeUsed" {
   count               = var.use_private_acs == "Y" ? 1 : 0
   name                = var.user_vnet_name
-  resource_group_name = var.user_resource_group_name
+  resource_group_name = var.networking_resource_group
 }
 
 data "azurerm_subnet" "azure_subnet_name" {
