@@ -51,7 +51,7 @@ resource "azurerm_subnet" "discovery_outbound_subnet_name" {
 }
 
 resource "azurerm_subnet" "nac_subnet_name" {
-  count                = length(var.nac_subnet)
+  count                = var.use_private_acs == "Y" ? length(var.nac_subnet) : 0
   name                 = "vnetSubnets-${count.index}"
   resource_group_name  = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
   virtual_network_name = data.azurerm_virtual_network.VnetToBeUsed[0].name
@@ -71,7 +71,7 @@ resource "azurerm_subnet" "nac_subnet_name" {
 }
 
 resource "null_resource" "update_subnet_name" {
-  count = length(var.nac_subnet)
+  count = var.use_private_acs == "Y" ? length(var.nac_subnet) : 0
   provisioner "local-exec" {
     command = "echo \"vnetSubnetName-${count.index}: \"${azurerm_subnet.nac_subnet_name[count.index].name} >> config.dat"
   }
@@ -106,7 +106,7 @@ resource "azurerm_storage_account" "storage_account" {
 
 resource "null_resource" "disable_storage_public_access" {
   provisioner "local-exec" {
-    command = var.use_private_acs == "Y" ? "az storage account update --allow-blob-public-access false --name ${azurerm_storage_account.storage_account.name} --resource-group ${azurerm_storage_account.storage_account.resource_group_name}" : ""
+    command = var.use_private_acs == "Y" ? "az storage account update --allow-blob-public-access false --name ${azurerm_storage_account.storage_account.name} --resource-group ${azurerm_storage_account.storage_account.resource_group_name}" : "echo 'INFO ::: NAC Discovery Storage Account is Public...'"
   }
   depends_on = [azurerm_storage_account.storage_account]
 }
@@ -168,7 +168,8 @@ data "azurerm_private_dns_zone" "discovery_function_app_dns_zone" {
   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
 }
 
-resource "azurerm_linux_function_app" "discovery_function_app" {
+resource "azurerm_linux_function_app" "discovery_function_app_private" {
+  count               = var.use_private_acs == "Y" ? 1 : 0
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
@@ -214,6 +215,41 @@ resource "azurerm_linux_function_app" "discovery_function_app" {
     data.azurerm_private_dns_zone.discovery_function_app_dns_zone
   ]
 }
+resource "azurerm_linux_function_app" "discovery_function_app_public" {
+  count               = var.use_private_acs == "Y" ? 0 : 1
+  name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
+  resource_group_name = data.azurerm_resource_group.resource_group.name
+  location            = data.azurerm_resource_group.resource_group.location
+  service_plan_id     = azurerm_service_plan.app_service_plan.id
+  app_settings = {
+    "WEBSITE_RUN_FROM_PACKAGE"    = "1"
+    "FUNCTIONS_WORKER_RUNTIME"    = "python",
+    "AzureWebJobsDisableHomepage" = "false"
+  }
+  identity {
+    type = "SystemAssigned"
+  }
+  site_config {
+    use_32_bit_worker        = false
+    application_insights_key = azurerm_application_insights.app_insights.instrumentation_key
+    cors {
+      allowed_origins = ["*"]
+    }
+    application_stack {
+      python_version = "3.9"
+    }
+  }
+  https_only                  = "true"
+  storage_account_name        = azurerm_storage_account.storage_account.name
+  storage_account_access_key  = azurerm_storage_account.storage_account.primary_access_key
+  functions_extension_version = "~4"
+  depends_on = [
+    azurerm_private_endpoint.storage_account_private_endpoint,
+    azurerm_service_plan.app_service_plan,
+    azurerm_application_insights.app_insights,
+    data.azurerm_private_dns_zone.discovery_function_app_dns_zone
+  ]
+}
 
 resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   count               = var.use_private_acs == "Y" ? 1 : 0
@@ -230,7 +266,7 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   private_service_connection {
     name                           = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}_connection"
     is_manual_connection           = false
-    private_connection_resource_id = azurerm_linux_function_app.discovery_function_app.id
+    private_connection_resource_id = azurerm_linux_function_app.discovery_function_app_private[0].id
     subresource_names              = ["sites"]
   }
 
@@ -239,13 +275,13 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   }
 
   depends_on = [
-    azurerm_linux_function_app.discovery_function_app
+    azurerm_linux_function_app.discovery_function_app_private
   ]
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_integration" {
   count          = var.use_private_acs == "Y" ? 1 : 0
-  app_service_id = azurerm_linux_function_app.discovery_function_app.id
+  app_service_id = azurerm_linux_function_app.discovery_function_app_private[0].id
   subnet_id      = azurerm_subnet.discovery_outbound_subnet_name[0].id
 
   depends_on = [
@@ -257,13 +293,13 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
 ##### Locals: used for publishing NAC_Discovery Function ###############
 
 locals {
-  publish_code_command = "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app.name} --build-remote true --src ${var.output_path}"
+  publish_code_command = var.use_private_acs == "Y" ? "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app_private[0].name} --build-remote true --src ${var.output_path}" : "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app_public[0].name} --build-remote true --src ${var.output_path}"
 }
 
 ###### Publish : NAC_Discovery Function ###############
 resource "null_resource" "function_app_publish" {
   provisioner "local-exec" {
-    command = var.use_private_acs == "Y" ? "sleep 15" : ""
+    command = var.use_private_acs == "Y" ? "sleep 15" : "echo 'INFO ::: Function app publish'"
   }
   provisioner "local-exec" {
     command = local.publish_code_command
@@ -284,7 +320,7 @@ resource "null_resource" "function_app_publish" {
 
 resource "null_resource" "set_env_variable" {
   provisioner "local-exec" {
-    command = "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app.name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
+    command = var.use_private_acs == "Y" ? "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app_private[0].name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\"" : "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app_public[0].name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
   }
   depends_on = [
     null_resource.function_app_publish
@@ -310,7 +346,7 @@ resource "azurerm_app_configuration_key" "index-endpoint" {
   configuration_store_id = data.azurerm_app_configuration.appconf.id
   key                    = "index-endpoint"
   label                  = "index-endpoint"
-  value                  = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  value                  = var.use_private_acs == "Y" ? "https://${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname}/api/IndexFunction" : "https://${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname}/api/IndexFunction"
   depends_on = [
     azurerm_app_configuration_key.web-access-appliance-address
   ]
@@ -332,7 +368,7 @@ resource "null_resource" "dos2unix" {
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command     = "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app.default_hostname}"
+    command     = var.use_private_acs == "Y" ? "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname}" : "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname}"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
@@ -343,5 +379,5 @@ resource "null_resource" "provision_nac" {
 ########### END : Provision NAC ###########################
 
 output "FunctionAppSearchURL" {
-  value = "https://${azurerm_linux_function_app.discovery_function_app.default_hostname}/api/IndexFunction"
+  value = var.use_private_acs == "Y" ? "https://${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname}/api/IndexFunction" : "https://${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname}/api/IndexFunction"
 }
