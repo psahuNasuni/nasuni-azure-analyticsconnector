@@ -26,9 +26,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     datasource_connection_string = retrieved_config_datasource_connection_string.value
     destination_container_name = retrieved_config_destination_container_name.value
 
-    # Define the names for the data source, skillset, index and indexer
+    # Define the names for the data source, index and indexer
     datasource_name = "datasource"
-    skillset_name = "skillset"
     index_name = "index"
     indexer_name = "indexer"
 
@@ -59,95 +58,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     print(r.status_code)
     logging.info("Datasource setup completed: ")
 
-    logging.info("Setting Skillset: ")
-    # Create a skillset
-    skillset_payload = {
-        "name": skillset_name,
-        "description":
-        "Extract entities, detect language and extract key-phrases",
-        "skills":
-        [
-            {
-                "@odata.type": "#Microsoft.Skills.Text.V3.EntityRecognitionSkill",
-                "categories": ["Organization"],
-                "defaultLanguageCode": "en",
-                "inputs": [
-                    {
-                        "name": "text",
-                        "source": "/document/content"
-                    }
-                ],
-                "outputs": [
-                    {
-                        "name": "organizations",
-                        "targetName": "organizations"
-                    }
-
-                ]
-            },
-            {
-                "@odata.type": "#Microsoft.Skills.Text.LanguageDetectionSkill",
-                "inputs": [
-                    {
-                        "name": "text",
-                        "source": "/document/content"
-                    }
-                ],
-                "outputs": [
-                    {
-                        "name": "languageCode",
-                        "targetName": "languageCode"
-                    }
-                ]
-            },
-            {
-                "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
-                "textSplitMode": "pages",
-                "maximumPageLength": 4000,
-                "inputs": [
-                    {
-                        "name": "text",
-                        "source": "/document/content"
-                    },
-                    {
-                        "name": "languageCode",
-                        "source": "/document/languageCode"
-                    }
-                ],
-                "outputs": [
-                    {
-                        "name": "textItems",
-                        "targetName": "pages"
-                    }
-                ]
-            },
-            {
-                "@odata.type": "#Microsoft.Skills.Text.KeyPhraseExtractionSkill",
-                "context": "/document/pages/*",
-                "inputs": [
-                    {
-                        "name": "text",
-                        "source": "/document/pages/*"
-                    },
-                    {
-                        "name": "languageCode",
-                        "source": "/document/languageCode"
-                    }
-                ],
-                "outputs": [
-                    {
-                        "name": "keyPhrases",
-                        "targetName": "keyPhrases"
-                    }
-                ]
-            }
-        ]
-    }
-
-    r = requests.put(endpoint + "/skillsets/" + skillset_name,
-                    data=json.dumps(skillset_payload), headers=headers, params=params)
-    logging.info("Skill set completed: ")
-
     logging.info("Creating Index setup")
     # Create an index
     index_payload = {
@@ -170,28 +80,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "false",
                 "facetable": "false",
                 "retrievable": "true"
-            },
-            {
-                "name": "languageCode",
-                "type": "Edm.String",
-                "searchable": "true",
-                "filterable": "false",
-                "facetable": "false"
-            },
-            {
-                "name": "keyPhrases",
-                "type": "Collection(Edm.String)",
-                "searchable": "true",
-                "filterable": "false",
-                "facetable": "false"
-            },
-            {
-                "name": "organizations",
-                "type": "Collection(Edm.String)",
-                "searchable": "true",
-                "sortable": "false",
-                "filterable": "false",
-                "facetable": "false"
             },
             {
                 "name": "file_location",
@@ -232,7 +120,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "name": indexer_name,
         "dataSourceName": datasource_name,
         "targetIndexName": index_name,
-        "skillsetName": skillset_name,
         "fieldMappings": [
             {
                 "sourceFieldName": "metadata_storage_path",
@@ -257,30 +144,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "targetFieldName": "volume_name"
             }
         ],
-        "outputFieldMappings":
-        [
-            {
-                "sourceFieldName": "/document/organizations",
-                "targetFieldName": "organizations"
-            },
-            {
-                "sourceFieldName": "/document/pages/*/keyPhrases/*",
-                "targetFieldName": "keyPhrases"
-            },
-            {
-                "sourceFieldName": "/document/languageCode",
-                "targetFieldName": "languageCode"
-            }
-        ],
         "parameters":
         {
             "maxFailedItems": 0,
             "maxFailedItemsPerBatch": 0,
             "configuration":
             {
-                "dataToExtract": "contentAndMetadata",
-                "imageAction": "generateNormalizedImages",
-                "executionEnvironment": "private"
+                "dataToExtract": "contentAndMetadata"
             }
         }
     }
