@@ -6,6 +6,9 @@ import ssl, os
 import sys,logging
 from datetime import *
 import boto3
+import requests
+from azure.appconfiguration import AzureAppConfigurationClient
+
 
 if len(sys.argv) < 7:
     print(
@@ -80,13 +83,86 @@ try:
     # My Accelerate Test
     share_url = open('nmc_api_data_external_share_url_' + rid + '.txt', 'w')
     share_url.write(web_access_appliance_address)
-    # for i in json_data['items']:
-    #     if i['volume_guid'] == vv_guid and i['browser_access_settings']['external_share_url'] == web_access_appliance_address:
-    #         print(i)
-    #         share_url = open('nmc_api_data_external_share_url_' + rid + '.txt', 'w')
-    #         share_url.write(i['browser_access_settings']['external_share_url'])
-    #     else:
-    #         share_url = open('nmc_api_data_external_share_url_' + rid + '.txt', 'w')
-    #         share_url.write('not_found')
+
+    headers = {
+        'Accept': 'application/json',
+        'Authorization': 'Token {}'.format(result['token'])
+    }
+    try:
+        r = requests.get('https://' + endpoint + '/api/v1.1/volumes/filers/shares/', headers = headers,verify=False)
+    except requests.exceptions.RequestException as err:
+        logging.error ("OOps: Something Else {}".format(err))
+    except requests.exceptions.HTTPError as errh:
+        logging.error ("Http Error: {}".format(errh))
+    except requests.exceptions.ConnectionError as errc:
+        logging.error ("Error Connecting: {}".format(errc))
+    except requests.exceptions.Timeout as errt:
+        logging.error ("Timeout Error: {}".format(errt))
+    except Exception as e:
+        logging.error('ERROR: {0}'.format(str(e)))
+    
+    share_data={}
+    name=[]
+    path=[]
+    for i in r.json()['items']:
+        if i['volume_guid'] == vv_guid and i['path']!='\\' and i['browser_access']==True:
+            name.append(r""+i['name'].replace('\\','/'))
+            path.append(r""+i['path'].replace('\\','/'))
+            
+
+    share_data['name']=name
+    share_data['path']=path
+
+    logging.info(share_data)
+
+    #Uploading files to blob storage
+
+    connection_string = os.environ["AZURE_APP_CONFIG"]
+
+    storage_account_name=connection_string.split(';')[1].split('=')[1]
+    container_name = "nasuni-share-data-container"
+
+    command = "az storage container create \
+    --account-name {} \
+    --name {} --connection-string {}".format(storage_account_name,container_name,connection_string)
+    subprocess.run(command, shell=True)
+   
+    files=[]
+
+    if len(share_data['name'])==0 or len(share_data['path']) == 0:
+        logging.info('dict is empty'.format(share_data))
+        share_name = open('nmc_api_data_v_share_name_' + rid + '.txt', 'w')
+        share_name.write('-')
+        files.append(share_name.name)
+
+        share_path = open('nmc_api_data_v_share_path_' + rid + '.txt', 'w')
+        share_path.write('-')
+        files.append(share_path.name)
+
+        share_name.close()
+        share_path.close()
+    else:
+        logging.info('dict has data'.format(share_data))
+        share_name = open('nmc_api_data_v_share_name_' + rid + '.txt', 'w')
+        share_name.write(str((','.join(share_data['name']))))
+        files.append(share_name.name)
+
+        share_path = open('nmc_api_data_v_share_path_' + rid + '.txt', 'w')
+        share_path.write(str((','.join(share_data['path']))))
+        files.append(share_path.name)
+        
+        share_name.close()
+        share_path.close()
+    
+
+    for file in files:
+        command = "az storage blob upload \
+        --account-name {} \
+        --container-name {} \
+        --name {} \
+        --file {}  --connection-string {}".format(storage_account_name,container_name, file, file,connection_string)
+        subprocess.run(command, shell=True)
+
+
 except Exception as e:
     print('Runtime Errors', e)
