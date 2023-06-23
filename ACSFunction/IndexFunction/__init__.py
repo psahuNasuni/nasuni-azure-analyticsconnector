@@ -106,14 +106,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true"
-            },
-            {
-                "name": "share_data",
-                "type": "Edm.String",
-                "searchable": "false",
-                "filterable": "true",
-                "facetable": "false",
-                "retrievable": "true"
             }
         ]
     }
@@ -140,7 +132,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "targetFieldName": "content"
             },
             {
-                "sourceFieldName": "metadata_storage_name",
+                "sourceFieldName": "metadata_storage_path",
                 "targetFieldName": "file_location"
             },
             {
@@ -150,10 +142,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "sourceFieldName": "volume_name",
                 "targetFieldName": "volume_name"
-            },
-            {
-                "sourceFieldName": "share_data",
-                "targetFieldName": "share_data"
             }
         ],
         "parameters":
