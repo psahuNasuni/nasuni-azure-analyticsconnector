@@ -97,6 +97,14 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true"
+            },
+            {
+                "name": "file_path",
+                "type": "Edm.String",
+                "searchable": "true",
+                "filterable": "true",
+                "facetable": "false",
+                "retrievable": "true"
             }
         ]
     }
@@ -129,6 +137,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "sourceFieldName": "volume_name",
                 "targetFieldName": "volume_name"
+            },
+            {
+                "sourceFieldName": "metadata_storage_path",
+                "targetFieldName": "file_path"
             }
         ],
         "parameters":
