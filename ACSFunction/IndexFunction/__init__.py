@@ -91,18 +91,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "sortable": "true"
             },
             {
-                "name": "toc_handle",
-                "type": "Edm.String",
-                "searchable": "false",
-                "filterable": "false",
-                "facetable": "false",
-                "retrievable": "true",
-                "sortable": "true"
-            },
-            {
                 "name": "volume_name",
                 "type": "Edm.String",
                 "searchable": "false",
+                "filterable": "true",
+                "facetable": "false",
+                "retrievable": "true"
+            },
+            {
+                "name": "file_path",
+                "type": "Edm.String",
+                "searchable": "true",
                 "filterable": "true",
                 "facetable": "false",
                 "retrievable": "true"
@@ -136,12 +135,12 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "targetFieldName": "file_location"
             },
             {
-                "sourceFieldName": "toc_handle",
-                "targetFieldName": "toc_handle"
-            },
-            {
                 "sourceFieldName": "volume_name",
                 "targetFieldName": "volume_name"
+            },
+            {
+                "sourceFieldName": "metadata_storage_path",
+                "targetFieldName": "file_path"
             }
         ],
         "parameters":
