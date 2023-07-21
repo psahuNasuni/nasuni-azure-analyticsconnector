@@ -368,7 +368,7 @@ resource "null_resource" "dos2unix" {
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command     = var.use_private_acs == "Y" ? "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname}" : "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname}"
+    command     = var.use_private_acs == "Y" ? "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname} ${var.nmc_volume_name}" : "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname} ${var.nmc_volume_name}"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [

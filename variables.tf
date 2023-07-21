@@ -75,3 +75,9 @@ variable "destination_container_name" {
   type        = string
   default     = ""
 }
+
+variable "nmc_volume_name" {
+  description = "NMC volume name"
+  type        = string
+  default     = ""
+}
