@@ -4,8 +4,13 @@ import logging
 import json
 import requests
 import azure.functions as func
+import re
 from azure.appconfiguration import AzureAppConfigurationClient
 
+def remove_special_characters(input_str):
+    pattern=r'[^a-zA-Z0-9]'
+    output=re.sub(pattern,'',input_str)
+    return output
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('INFO ::: Python HTTP trigger function processed a request.')
@@ -29,10 +34,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     datasource_connection_string = retrieved_config_datasource_connection_string.value
     destination_container_name = retrieved_config_destination_container_name.value
 
+    acs_nmc_volume_name=remove_special_characters(nmc_volume_name)
     # Define the names for the data source, index and indexer
-    datasource_name = nmc_volume_name+"dts"
+    datasource_name = acs_nmc_volume_name+"dts"
     index_name = "index"
-    indexer_name = nmc_volume_name+"indexer"
+    indexer_name = acs_nmc_volume_name+"indexer"
 
     logging.info('Setting the endpoint')
     # Setup the endpoint
