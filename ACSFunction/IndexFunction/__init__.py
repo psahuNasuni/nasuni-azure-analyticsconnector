@@ -15,10 +15,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     app_config_client = AzureAppConfigurationClient.from_connection_string(connection_string)
     logging.info('INFO ::: App Config client Creation is successfull')    
 
+    # Get Volume Name
+    nmc_volume_name=req.params.get("nmc_volume_name")
+    
     retrieved_config_acs_api_key = app_config_client.get_configuration_setting(key='acs-api-key', label='acs-api-key')
     retrieved_config_nmc_api_acs_url = app_config_client.get_configuration_setting(key='nmc-api-acs-url', label='nmc-api-acs-url')
-    retrieved_config_datasource_connection_string = app_config_client.get_configuration_setting(key='datasource-connection-string', label='datasource-connection-string')
-    retrieved_config_destination_container_name = app_config_client.get_configuration_setting(key='destination-container-name', label='destination-container-name')
+    retrieved_config_datasource_connection_string = app_config_client.get_configuration_setting(key='datasource-connection-string', label=nmc_volume_name+'-datasource-connection-string')
+    retrieved_config_destination_container_name = app_config_client.get_configuration_setting(key='destination-container-name', label=nmc_volume_name+'-destination-container-name')
     
     logging.info('Fetching Secretes from Azure App Configuration')
     acs_api_key = retrieved_config_acs_api_key.value
@@ -27,9 +30,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     destination_container_name = retrieved_config_destination_container_name.value
 
     # Define the names for the data source, index and indexer
-    datasource_name = "datasource"
+    datasource_name = nmc_volume_name+"dts"
     index_name = "index"
-    indexer_name = "indexer"
+    indexer_name = nmc_volume_name+"indexer"
 
     logging.info('Setting the endpoint')
     # Setup the endpoint

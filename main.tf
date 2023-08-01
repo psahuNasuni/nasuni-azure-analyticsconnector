@@ -329,31 +329,6 @@ resource "null_resource" "set_env_variable" {
 
 ########## END : Set Environmental Variable to NAC Discovery Function ##########
 
-########### START : Create and Update App Configuration  #######################
-
-resource "azurerm_app_configuration_key" "web-access-appliance-address" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "web-access-appliance-address"
-  label                  = "web-access-appliance-address"
-  value                  = var.web_access_appliance_address
-  depends_on = [
-    data.azurerm_app_configuration.appconf,
-    null_resource.set_env_variable
-  ]
-}
-
-resource "azurerm_app_configuration_key" "index-endpoint" {
-  configuration_store_id = data.azurerm_app_configuration.appconf.id
-  key                    = "index-endpoint"
-  label                  = "index-endpoint"
-  value                  = var.use_private_acs == "Y" ? "https://${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname}/api/IndexFunction" : "https://${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname}/api/IndexFunction"
-  depends_on = [
-    azurerm_app_configuration_key.web-access-appliance-address
-  ]
-}
-
-########### END : Create and Update App Configuration  ###########################
-
 ########## START : Provision NAC ###########################
 
 resource "null_resource" "dos2unix" {
@@ -362,17 +337,19 @@ resource "null_resource" "dos2unix" {
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
-    azurerm_app_configuration_key.index-endpoint
+    data.azurerm_app_configuration.appconf,
+    null_resource.set_env_variable
   ]
 }
 
 resource "null_resource" "provision_nac" {
   provisioner "local-exec" {
-    command     = var.use_private_acs == "Y" ? "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname}" : "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname}"
+    command     = var.use_private_acs == "Y" ? "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_private[0].default_hostname} ${var.acs_nmc_volume_name}" : "./nac-auth.sh ${azurerm_linux_function_app.discovery_function_app_public[0].default_hostname} ${var.acs_nmc_volume_name}"
     interpreter = ["/bin/bash", "-c"]
   }
   depends_on = [
-    null_resource.dos2unix
+    null_resource.dos2unix,
+    null_resource.function_app_publish
   ]
 }
 
