@@ -16,8 +16,8 @@ variable "acs_admin_app_config_name" {
   default     = "nasuni-labs-acs-admin"
 }
 
-variable "web_access_appliance_address" {
-  description = "Azure Web access appliance address"
+variable "acs_nmc_volume_name" {
+  description = "NMC Volume Name"
   type        = string
   default     = ""
 }
