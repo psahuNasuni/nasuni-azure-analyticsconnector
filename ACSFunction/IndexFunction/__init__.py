@@ -102,10 +102,11 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             {
                 "name": "volume_name",
                 "type": "Edm.String",
-                "searchable": "false",
+                "searchable": "true",
                 "filterable": "true",
                 "facetable": "false",
-                "retrievable": "true"
+                "retrievable": "true",
+                "sortable": "true"
             },
             {
                 "name": "file_path",
