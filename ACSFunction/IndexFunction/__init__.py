@@ -154,8 +154,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         ],
         "parameters":
         {
-            "maxFailedItems": 0,
-            "maxFailedItemsPerBatch": 0,
+            "maxFailedItems": -1,
+            "maxFailedItemsPerBatch": -1,
             "configuration":
             {
                 "dataToExtract": "contentAndMetadata"
