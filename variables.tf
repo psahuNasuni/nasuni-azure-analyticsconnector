@@ -22,6 +22,12 @@ variable "acs_nmc_volume_name" {
   default     = ""
 }
 
+variable "nac_resource_group_name" {
+  description = "nac respurce group name"
+  type        = string
+  default     = ""
+}
+
 variable "output_path" {
   type        = string
   description = "function_path of file where zip file is stored"

@@ -1,6 +1,7 @@
 #!/bin/bash
 NAC_DISCOVERY_FUNCTION_APP="$1"
 NMC_VOLUME_NAME="$2"
+NAC_RESOURCE_GROUP_NAME="$3"
 echo "curl -X GET 'https://${NAC_DISCOVERY_FUNCTION_APP}/api/IndexFunction?nmc_volume_name=${NMC_VOLUME_NAME}' -H 'Content-Type:application/json'"
 n=0
 until [ "$n" -ge 5 ]
@@ -17,6 +18,7 @@ do
         nac_manager encrypt -c $NMC_VOLUME_NAME.dat -p pass@123456
         echo "INFO ::: Encrypting $NMC_VOLUME_NAME.dat file : END"
         echo "INFO ::: NAC Deployment : STARTED ........."
+        sh nac_helper.sh $NAC_RESOURCE_GROUP_NAME &
         nac_manager deploy -c $NMC_VOLUME_NAME.dat -p pass@123456
         echo "INFO ::: NAC Deployment : COMPLETED !!!"
         break
