@@ -1,12 +1,14 @@
 #!/bin/bash
 resource_group="$1"
 resource_list_json=""
+cosmosdb_account_name=""
 database_name="Nasuni"
 container_name="Metrics"
 
 echo " Argument received is : $resource_group"
 
 get_resource_list () {
+    $resource_list_json=""
     while [ -z "$resource_list_json" ]; do
         resource_list_json=$(az resource list --resource-group "$resource_group")
     done
@@ -14,10 +16,8 @@ get_resource_list () {
 
 get_resource_list
 
-max_minutes=10
-current_minute=0
-
-while [ "$current_minute" -lt "$max_minutes" ]; do
+current_minute=1
+while [ -z "$cosmosdb_account_name" ]; do
 
     cosmosdb_account_name=$(echo "$resource_list_json" | jq -r '.[] | select(.type == "Microsoft.DocumentDb/databaseAccounts") | .name')
     echo "Cosmos DB Account Name: $cosmosdb_account_name"
