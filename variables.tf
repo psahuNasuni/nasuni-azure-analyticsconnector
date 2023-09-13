@@ -23,7 +23,7 @@ variable "acs_nmc_volume_name" {
 }
 
 variable "nac_resource_group_name" {
-  description = "nac respurce group name"
+  description = "nac resource group name"
   type        = string
   default     = ""
 }
