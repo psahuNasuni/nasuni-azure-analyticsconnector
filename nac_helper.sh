@@ -8,7 +8,7 @@ container_name="Metrics"
 echo " Argument received is : $resource_group"
 
 get_resource_list () {
-    $resource_list_json=""
+    resource_list_json=""
     while [ -z "$resource_list_json" ]; do
         resource_list_json=$(az resource list --resource-group "$resource_group")
     done
@@ -33,12 +33,10 @@ while [ -z "$cosmosdb_account_name" ]; do
         fi
 done
 
-sleep 
-
-db_state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
+sleep 600
 
 while true; do
-  db_state=$(az cosmosdb show --name "$cosmosdb_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
+  db_state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
   
   if [ "$db_state" == "Succeeded" ]; then
     echo "Cosmos DB provisioning is completed"
