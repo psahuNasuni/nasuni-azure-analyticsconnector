@@ -35,20 +35,20 @@ done
 
 sleep 600
 
-while true; do
-  db_state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
+#while true; do
+  #db_state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
   
-  if [ "$db_state" == "Succeeded" ]; then
-    echo "Cosmos DB provisioning is completed"
-    break
-  elif [ "$db_state" == "Creating" ] || [ "$db_state" == "Updating" ]; then
-    echo "Cosmos DB provisioning state is $db_state. Waiting for 1 minute to re-check the state"
-    sleep 60
-  else
-    echo "Cosmos DB provisioning state is $db_state. Exiting the nac_helper script"
-    exit 1
-  fi
-done
+  #if [ "$db_state" == "Succeeded" ]; then
+    #echo "Cosmos DB provisioning is completed"
+    #break
+  #elif [ "$db_state" == "Creating" ] || [ "$db_state" == "Updating" ]; then
+    #echo "Cosmos DB provisioning state is $db_state. Waiting for 1 minute to re-check the state"
+    #sleep 60
+  #else
+    #echo "Cosmos DB provisioning state is $db_state. Exiting the nac_helper script"
+    #exit 1
+  #fi
+#done
 
 echo "Trying to retrieve count of objects in cosmos db"
 
