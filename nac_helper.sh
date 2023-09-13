@@ -33,7 +33,24 @@ while [ -z "$cosmosdb_account_name" ]; do
         fi
 done
 
-sleep 600
+sleep 
+
+db_state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
+
+while true; do
+  db_state=$(az cosmosdb show --name "$cosmosdb_name" --resource-group "$resource_group" --query "provisioningState" -o tsv)
+  
+  if [ "$db_state" == "Succeeded" ]; then
+    echo "Cosmos DB provisioning is completed"
+    break
+  elif [ "$db_state" == "Creating" ] || [ "$db_state" == "Updating" ]; then
+    echo "Cosmos DB provisioning state is $db_state. Waiting for 1 minute to re-check the state"
+    sleep 60
+  else
+    echo "Cosmos DB provisioning state is $db_state. Exiting the nac_helper script"
+    exit 1
+  fi
+done
 
 echo "Trying to retrieve count of objects in cosmos db"
 
@@ -45,17 +62,12 @@ echo "Document Count in $database_name/$container_name: $count"
 if [ "$count" -lt 1 ]; then
         echo "Document count is less than 1. Exiting the script."
         
-        pid=$(ps -ef | grep nac_manager | awk '{print $2}')
-        echo "pid of nac_manager process is $pid"
-
-        pids=($(pgrep -f 'nac_manager'))
-
-        if [ ${#pids[@]} -gt 0 ]; then
-            for pid in "${pids[@]}"; do
-                echo "Killing process with PID: $pid"
-                kill "$pid"
-            done
-        fi
+        pgrep -f 'nac_manager' > nac_manager_pids.tmp
+        while read -r pid; do
+            echo "Killing process with PID: $pid"
+            kill "$pid"
+        done < nac_manager_pids.tmp
+        rm nac_manager_pids.tmp
         exit 1
 
 else
