@@ -15,7 +15,7 @@ do
         chmod 777 $connector_location/$NMC_VOLUME_NAME.dat
         mv $connector_location/$NMC_VOLUME_NAME.dat /usr/local/bin/$NMC_VOLUME_NAME.dat
         echo "INFO ::: Encrypting $NMC_VOLUME_NAME.dat file : START"
-        nac_manager encrypt -c $NMC_VOLUME_NAME.dat -p pass@123456
+        nac_manager encrypt -c $NMC_VOLUME_NAME.dat -p pass@123456xyz
         echo "INFO ::: Encrypting $NMC_VOLUME_NAME.dat file : END"
         echo "INFO ::: NAC Deployment : STARTED ........."
         sh nac_helper.sh $NAC_RESOURCE_GROUP_NAME &
