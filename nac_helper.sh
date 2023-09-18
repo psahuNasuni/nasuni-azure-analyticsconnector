@@ -35,9 +35,34 @@ done
 
 sleep 600
 
+while true; do
+  state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" | tr -d '"')
+  
+echo "state is : $state"
+
+  if [ -n "$state" ]; then
+
+  case "$state" in
+  "Succeeded")
+    echo "Cosmos DB provisioning state is Succeeded."
+    break
+    ;;
+  "Creating" | "Updating")
+    echo "Cosmos DB provisioning state is $state. Waiting for 1 minute to re-check"
+    sleep 60
+    ;;
+  *)
+    echo "Cosmos DB provisioning state is $state. Exiting..."
+    exit 1
+    ;;
+esac
+
+  fi
+done
+
 echo "Trying to retrieve count of objects in cosmos db"
 
-result=$(az cosmosdb sql container show --account-name "$cosmosdb_account_name" --resource-group "$resource_group" --database-name "$database_name" --name "$container_name")
+result=$(az cosmosdb sql container show --account-name "$cosmosdb_account_name" --resource-group "$resource_group" --database-name "$database_name" --name "$container_name" 2> /dev/null)
 count=$(echo "$result" | jq -r '.resource.statistics[].documentCount' | awk '{s+=$1} END {print s}')
 
 echo "Document Count in $database_name/$container_name: $count"
