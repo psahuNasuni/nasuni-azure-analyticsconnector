@@ -28,6 +28,18 @@ variable "nac_resource_group_name" {
   default     = ""
 }
 
+variable "tags" {
+  description = "tags to apply to all resources"
+  type        = map(string)
+  default = {
+    Application     = "Nasuni Analytics Connector with Azure Cognitive Search"
+    Developer       = "Nasuni"
+    PublicationType = "Nasuni Community Tool"
+    Version         = "V 0.2"
+
+  }
+}
+
 variable "output_path" {
   type        = string
   description = "function_path of file where zip file is stored"

@@ -97,6 +97,7 @@ resource "azurerm_storage_account" "storage_account" {
   location                 = data.azurerm_resource_group.resource_group.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+  tags                     = var.tags
 
   depends_on = [
     null_resource.update_subnet_name,
@@ -148,6 +149,7 @@ resource "azurerm_application_insights" "app_insights" {
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
   application_type    = "web"
+  tags                = var.tags
 }
 
 ###### App Service Plan for: Azure function NAC_Discovery in ACS Resource Group ###############
@@ -158,6 +160,7 @@ resource "azurerm_service_plan" "app_service_plan" {
   location            = data.azurerm_resource_group.resource_group.location
   os_type             = "Linux"
   sku_name            = "EP1"
+  tags                = var.tags
 }
 
 ###### Function App for: Azure function NAC_Discovery in ACS Resource Group ###############
@@ -174,6 +177,7 @@ resource "azurerm_linux_function_app" "discovery_function_app_private" {
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
   service_plan_id     = azurerm_service_plan.app_service_plan.id
+  tags                = var.tags
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true",
     "FUNCTIONS_WORKER_RUNTIME"       = "python",
@@ -221,6 +225,7 @@ resource "azurerm_linux_function_app" "discovery_function_app_public" {
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
   service_plan_id     = azurerm_service_plan.app_service_plan.id
+  tags                = var.tags
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE"    = "1"
     "FUNCTIONS_WORKER_RUNTIME"    = "python",
@@ -257,6 +262,7 @@ resource "azurerm_private_endpoint" "discovery_function_app_private_endpoint" {
   location            = data.azurerm_virtual_network.VnetToBeUsed[0].location
   resource_group_name = data.azurerm_virtual_network.VnetToBeUsed[0].resource_group_name
   subnet_id           = data.azurerm_subnet.azure_subnet_name[0].id
+  tags                = var.tags
 
   private_dns_zone_group {
     name                 = "default"
@@ -283,6 +289,7 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
   count          = var.use_private_acs == "Y" ? 1 : 0
   app_service_id = azurerm_linux_function_app.discovery_function_app_private[0].id
   subnet_id      = azurerm_subnet.discovery_outbound_subnet_name[0].id
+  
 
   depends_on = [
     azurerm_subnet.discovery_outbound_subnet_name,
