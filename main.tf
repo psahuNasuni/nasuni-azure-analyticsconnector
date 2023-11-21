@@ -155,7 +155,7 @@ resource "azurerm_application_insights" "app_insights" {
 ###### App Service Plan for: Azure function NAC_Discovery in ACS Resource Group ###############
 
 resource "azurerm_service_plan" "app_service_plan" {
-  name                = "nasuni-app-service-plan-${random_id.nac_unique_stack_id.hex}"
+  name                = "nasuni-app-discovery-service-plan-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
   os_type             = "Linux"
