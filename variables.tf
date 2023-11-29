@@ -28,6 +28,14 @@ variable "nac_resource_group_name" {
   default     = ""
 }
 
+
+variable "destination_storage_account_name" {
+  description = "destination storage account name"
+  type        = string
+  default     = ""
+}
+
+
 variable "tags" {
   description = "tags to apply to all resources"
   type        = map(string)
