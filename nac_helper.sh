@@ -57,7 +57,7 @@ while [ -z "$cosmosdb_account_name" ]; do
         break
     else
         echo "Check $current_minute Cosmos DB has not been created yet."
-        sleep 5
+        sleep 60
         current_minute=$((current_minute + 1))
         get_resource_list
         fi
