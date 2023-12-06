@@ -93,3 +93,6 @@ variable "destination_container_name" {
   type        = string
   default     = ""
 }
+variable "service_name" {
+  default = ""
+}
