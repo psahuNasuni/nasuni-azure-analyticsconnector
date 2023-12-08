@@ -8,30 +8,6 @@ container_name="Metrics"
 object_needed=0
 cosmosdb_count=0
 
-get_storage_account_object_count(){
-    destination_account_key=`az storage account keys list --account-name $destination_storage_acc_name | jq -r '.[0].value'`
-
-    object_needed=`az storage blob list --account-name $destination_storage_acc_name --container-name destcontainer --account-key $destination_account_key --query "length([])"`
-
-    echo "Total required objects in cosmosdb: $object_needed"
-}
-
-get_resource_list () {
-    resource_list_json=""
-    while [ -z "$resource_list_json" ]; do
-        resource_list_json=$(az resource list --resource-group "$resource_group" 2> /dev/null)
-        echo "Retrieving resource list"
-    done
-    echo "Retrieved resource list"
-
-}
-
-get_cosmosdb_document_count() {
-    echo "Trying to retrieve count of objects in cosmos db"
-    result=$(az cosmosdb sql container show --account-name "$cosmosdb_account_name" --resource-group "$resource_group" --database-name "$database_name" --name "$container_name" 2> /dev/null)
-    cosmosdb_count=$(echo "$result" | jq -r '.resource.statistics[].documentCount' | awk '{s+=$1} END {print s}')
-}
-
 stop_nac_process() {
     pgrep -f 'nac_manager' > nac_manager_pids.tmp
     while read -r pid; do
@@ -43,7 +19,58 @@ stop_nac_process() {
     exit 1
 }
 
+get_storage_account_object_count(){
+    destination_account_key=`az storage account keys list --account-name $destination_storage_acc_name | jq -r '.[0].value'`
 
+    object_needed=`az storage blob list --account-name $destination_storage_acc_name --container-name destcontainer --account-key $destination_account_key --query "length([])"`
+
+    echo "Total required objects in cosmosdb: $object_needed"
+}
+
+get_resource_list () {
+    resource_list_json=""
+    max_attempts=2
+    current_attempt=1
+
+    while [ -z "$resource_list_json" ] && [ "$current_attempt" -le "$max_attempts" ]; do
+        sleep 60
+        resource_list_json=$(az resource list --resource-group "$resource_group" 2> /dev/null)
+        echo "Retrieving resource list (Attempt $current_attempt)"
+        
+        if [ -z "$resource_list_json" ]; then      
+            ((current_attempt++))
+        fi
+    done
+
+    if [ -z "$resource_list_json" ]; then
+        echo "Failed to retrieve resource list after $max_attempts attempts. Exiting script."
+        stop_nac_process
+        exit 1
+    else
+        echo "Successfully retrieved resource list"
+    fi
+}
+
+check_storage_account_existence() {
+    storage_account_name="$1"
+
+    if az storage account show --name "$storage_account_name" --query "name" --output tsv 2>/dev/null; then
+        echo "Storage account '$storage_account_name' exists."
+    else
+        echo "Storage account '$storage_account_name' not found. Exiting script."
+        stop_nac_process
+        exit 1        
+    fi
+}
+
+get_cosmosdb_document_count() {
+    echo "Trying to retrieve count of objects in cosmos db"
+    result=$(az cosmosdb sql container show --account-name "$cosmosdb_account_name" --resource-group "$resource_group" --database-name "$database_name" --name "$container_name" 2> /dev/null)
+    cosmosdb_count=$(echo "$result" | jq -r '.resource.statistics[].documentCount' | awk '{s+=$1} END {print s}')
+}
+
+
+check_storage_account_existence "$destination_storage_acc_name"
 get_resource_list
 
 current_minute=1
