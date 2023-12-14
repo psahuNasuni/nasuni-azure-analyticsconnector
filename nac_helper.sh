@@ -20,11 +20,26 @@ stop_nac_process() {
 }
 
 get_storage_account_object_count(){
-    destination_account_key=`az storage account keys list --account-name $destination_storage_acc_name | jq -r '.[0].value'`
+	NEXTMARKER=""
+	destination_storage_conn_str=$(az storage account show-connection-string --name ${destination_storage_acc_name} | jq -r '.connectionString')
+	
+    echo "Checking count of objects in cosmosdb"
+	while [ "$NEXTMARKER" != "null" ]; do
+		if [ -n "$NEXTMARKER" ]; then
 
-    object_needed=`az storage blob list --account-name $destination_storage_acc_name --container-name destcontainer --account-key $destination_account_key --query "length([])"`
+			FILES=$(az storage blob list -c destcontainer --marker $NEXTMARKER --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
+		else
 
-    echo "Total required objects in cosmosdb: $object_needed"
+			FILES=$(az storage blob list -c destcontainer --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
+		fi
+
+		current_blob_count=$(echo "$FILES" | jq length)
+		object_needed=$((object_needed + current_blob_count))
+		NEXTMARKER=$(echo $FILES | jq -r '.[-1].nextMarker')
+	done
+	object_needed=$((object_needed - 1))
+	echo "Count of objects in destination storage container: $object_needed"
+	
 }
 
 get_resource_list () {
@@ -130,13 +145,14 @@ if [ "$cosmosdb_count" -lt 1 ]; then
         echo "Document count is less than 1. Exiting the script."
         stop_nac_process
 else
-    echo "Count of objects is $cosmosdb_count . Waiting for count to reach $object_needed."
+    echo "Count of objects is $cosmosdb_count . Required count of objects are $object_needed."
 
     previous_count="$cosmosdb_count"
 
     while [ "$cosmosdb_count" -lt "$object_needed" ]; do
-        sleep 120
+        sleep 100
 
+        get_storage_account_object_count
         get_cosmosdb_document_count
         new_count=$cosmosdb_count
        
