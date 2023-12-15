@@ -179,7 +179,7 @@ resource "azurerm_linux_function_app" "discovery_function_app_private" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
-  service_plan_id     = azurerm_service_plan.app_service_plan.id
+  service_plan_id     = azurerm_service_plan.app_service_plan[0].id
   tags                = var.tags
   app_settings = {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true",
@@ -227,7 +227,7 @@ resource "azurerm_linux_function_app" "discovery_function_app_public" {
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
-  service_plan_id     = azurerm_service_plan.app_service_plan.id
+  service_plan_id     = var.service_name == "EXP" ? "" : azurerm_service_plan.app_service_plan[0].id
   tags                = var.tags
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE"    = "1"
@@ -332,7 +332,7 @@ resource "null_resource" "function_app_publish" {
 resource "null_resource" "set_env_variable" {
   count = var.service_name == "EXP" ? 0 : 1
   provisioner "local-exec" {
-    command = var.use_private_acs == "Y" ? "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app_private[0].name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\"" : "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app_public[0].name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf.primary_write_key[0].connection_string}\""
+    command = var.use_private_acs == "Y" ? "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app_private[0].name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf[0].primary_write_key[0].connection_string}\"" : "az functionapp config appsettings set --name ${azurerm_linux_function_app.discovery_function_app_public[0].name} --resource-group ${data.azurerm_resource_group.resource_group.name} --settings AZURE_APP_CONFIG=\"${data.azurerm_app_configuration.appconf[0].primary_write_key[0].connection_string}\""
   }
   depends_on = [
     null_resource.function_app_publish
