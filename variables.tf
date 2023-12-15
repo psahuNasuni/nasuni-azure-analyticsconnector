@@ -9,7 +9,11 @@ variable "acs_resource_group" {
   type        = string
   default     = "nasuni-labs-acs-rg"
 }
-
+variable "exp_resource_group" {
+  description = "Resouce group name for ExportOnly"
+  type        = string
+  default     = ""
+}
 variable "acs_admin_app_config_name" {
   description = "Azure acs_admin_app_config_name"
   type        = string
