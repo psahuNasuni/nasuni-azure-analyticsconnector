@@ -223,7 +223,7 @@ resource "azurerm_linux_function_app" "discovery_function_app_private" {
   ]
 }
 resource "azurerm_linux_function_app" "discovery_function_app_public" {
-  count               = var.use_private_acs == "Y" && var.service_name != "EXP" ? 0 : 1
+  count               = var.use_private_acs == "Y" || var.service_name != "EXP" ? 0 : 1
   name                = "nasuni-function-app-${random_id.nac_unique_stack_id.hex}"
   resource_group_name = data.azurerm_resource_group.resource_group.name
   location            = data.azurerm_resource_group.resource_group.location
