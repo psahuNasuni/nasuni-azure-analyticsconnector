@@ -4,7 +4,7 @@ NMC_VOLUME_NAME="$2"
 NAC_RESOURCE_GROUP_NAME="$3"
 SERVICE_NAME="$4"
 
-if [ "$SERVICE_NAME" == "EXP" ]; then
+if [ "${SERVICE_NAME^^}" == "EXP" ]; then
     m=0
     until [ "$m" -ge 5 ]
     do

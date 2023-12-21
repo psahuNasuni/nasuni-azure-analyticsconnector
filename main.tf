@@ -303,8 +303,9 @@ resource "azurerm_app_service_virtual_network_swift_connection" "outbound_vnet_i
 ##### Locals: used for publishing NAC_Discovery Function ###############
 
 locals {
-  publish_code_command = var.use_private_acs == "Y" && var.service_name != "EXP" ? "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app_private[0].name} --build-remote true --src ${var.output_path}" : "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app_public[0].name} --build-remote true --src ${var.output_path}"
+  publish_code_command = "${var.service_name == "EXP" ? "" : ( var.use_private_acs == "Y" ? "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app_private[0].name} --build-remote true --src ${var.output_path}" : "az functionapp deployment source config-zip -g ${data.azurerm_resource_group.resource_group.name} -n ${azurerm_linux_function_app.discovery_function_app_public[0].name} --build-remote true --src ${var.output_path}" )}"  
 }
+
 
 ###### Publish : NAC_Discovery Function ###############
 resource "null_resource" "function_app_publish" {
