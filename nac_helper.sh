@@ -28,10 +28,10 @@ get_storage_account_object_count(){
 	while [ "$NEXTMARKER" != "null" ]; do
 		if [ -n "$NEXTMARKER" ]; then
 
-			FILES=$(az storage blob list -c destcontainer2 --marker $NEXTMARKER --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
+			FILES=$(az storage blob list -c destcontainer --marker $NEXTMARKER --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
 		else
 
-			FILES=$(az storage blob list -c destcontainer2 --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
+			FILES=$(az storage blob list -c destcontainer --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
 		fi
 
 		current_blob_count=$(echo "$FILES" | jq length)
