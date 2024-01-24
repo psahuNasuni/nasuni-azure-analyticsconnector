@@ -5,7 +5,7 @@ resource_list_json=""
 cosmosdb_account_name=""
 database_name="Nasuni"
 container_name="Metrics"
-object_needed=0
+scontainer_object_count=0
 cosmosdb_count=0
 
 stop_nac_process() {
@@ -22,23 +22,24 @@ stop_nac_process() {
 get_storage_account_object_count(){
 	NEXTMARKER=""
 	destination_storage_conn_str=$(az storage account show-connection-string --name ${destination_storage_acc_name} | jq -r '.connectionString')
-	
+	scontainer_object_count=0
+
     echo "Checking count of objects in cosmosdb"
 	while [ "$NEXTMARKER" != "null" ]; do
 		if [ -n "$NEXTMARKER" ]; then
 
-			FILES=$(az storage blob list -c destcontainer --marker $NEXTMARKER --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
+			FILES=$(az storage blob list -c destcontainer2 --marker $NEXTMARKER --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
 		else
 
-			FILES=$(az storage blob list -c destcontainer --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
+			FILES=$(az storage blob list -c destcontainer2 --show-next-marker --account-name $destination_storage_acc_name --connection-string "$destination_storage_conn_str" --output json)
 		fi
 
 		current_blob_count=$(echo "$FILES" | jq length)
-		object_needed=$((object_needed + current_blob_count))
+		scontainer_object_count=$((scontainer_object_count + current_blob_count))
 		NEXTMARKER=$(echo $FILES | jq -r '.[-1].nextMarker')
 	done
-	object_needed=$((object_needed - 1))
-	echo "Count of objects in destination storage container: $object_needed"
+	scontainer_object_count=$((scontainer_object_count - 1))
+	echo "Count of objects in destination storage container: $scontainer_object_count"
 	
 }
 
@@ -135,36 +136,40 @@ done
 get_storage_account_object_count
 get_cosmosdb_document_count
 
-if [ -z "$object_needed" ]; then
+if [ -z "$scontainer_object_count" ]; then
         echo "No data found in destination storage account."
         stop_nac_process
     fi
 
 
 if [ "$cosmosdb_count" -lt 1 ]; then
-        echo "Document count is less than 1. Exiting the script."
+        echo "Document count in cosmosdb is less than 1. Exiting the script."
         stop_nac_process
 else
-    echo "Count of objects is $cosmosdb_count . Required count of objects are $object_needed."
+    counter=0
+    max_checks=5
 
-    previous_count="$cosmosdb_count"
-
-    while [ "$cosmosdb_count" -lt "$object_needed" ]; do
+    while ["$counter" -lt "$max_checks"]; do
         sleep 100
 
         get_storage_account_object_count
         get_cosmosdb_document_count
-        new_count=$cosmosdb_count
-       
-        if [ "$new_count" -eq "$previous_count" ]; then
-            echo "Subsequent Count of objects in cosmosdb are same. Exiting the script."
+        new_db_count="$cosmosdb_count"
+        new_container_count="$scontainer_object_count"
+
+        if [[ "$new_container_count" -eq "$previous_container_count" ]] && [[ "$new_db_count" -eq "$previous_db_count" ]]; then
+
+            echo "Subsequent Count of objects in cosmosdb and destination container are same. Exiting the nac_manager script."
             stop_nac_process
             exit 1
         fi
 
         echo "Document Count in $database_name/$container_name: $cosmosdb_count"
-        previous_count="$new_count"
+        echo "Document Count in $destination_storage_acc_name/destcontainer:$scontainer_object_count"
+        
+        previous_db_count="$new_db_count"
+        previous_container_count="$new_container_count"
     done
 
-    echo "Count of objects has reached $object_needed. Exiting the script."
-    fi
+    echo "Exiting the nac_helper script."
+fi
