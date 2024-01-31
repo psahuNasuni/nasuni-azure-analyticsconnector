@@ -149,7 +149,7 @@ else
     counter=0
     max_checks=5
 
-    while ["$counter" -lt "$max_checks"]; do
+    while [ "$counter" -lt "$max_checks" ]; do
         sleep 100
 
         get_storage_account_object_count
@@ -167,8 +167,10 @@ else
         echo "Document Count in $database_name/$container_name: $cosmosdb_count"
         echo "Document Count in $destination_storage_acc_name/destcontainer:$scontainer_object_count"
         
+        ((counter++))
         previous_db_count="$new_db_count"
         previous_container_count="$new_container_count"
+
     done
 
     echo "Exiting the nac_helper script."
