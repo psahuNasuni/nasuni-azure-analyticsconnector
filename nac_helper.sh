@@ -148,6 +148,9 @@ if [ "$cosmosdb_count" -lt 1 ]; then
 else
     counter=0
     max_checks=5
+    previous_container_count=0
+    previous_db_count=0
+
 
     while [ "$counter" -lt "$max_checks" ]; do
         sleep 100
@@ -157,7 +160,7 @@ else
         new_db_count="$cosmosdb_count"
         new_container_count="$scontainer_object_count"
 
-        if [[ "$new_container_count" -eq "$previous_container_count" ]] && [[ "$new_db_count" -eq "$previous_db_count" ]]; then
+        if [ "$new_container_count" -eq "$previous_container_count" ] && [ "$new_db_count" -eq "$previous_db_count" ]; then
 
             echo "Subsequent Count of objects in cosmosdb and destination container are same. Exiting the nac_manager script."
             stop_nac_process
