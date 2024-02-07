@@ -160,17 +160,19 @@ else
         new_db_count="$cosmosdb_count"
         new_container_count="$scontainer_object_count"
 
-        if [ "$new_container_count" -eq "$previous_container_count" ] && [ "$new_db_count" -eq "$previous_db_count" ]; then
+        if [ "$new_container_count" -eq "$previous_container_count" ]; then
+            if [ "$new_db_count" -eq "$previous_db_count" ]; then
 
-            echo "Subsequent Count of objects in cosmosdb and destination container are same. Exiting the nac_manager script."
-            stop_nac_process
-            exit 1
+                echo "Subsequent Count of objects in cosmosdb and destination container are same. Exiting the nac_manager script."
+                stop_nac_process
+                exit 1
+            fi
         fi
 
         echo "Document Count in $database_name/$container_name: $cosmosdb_count"
         echo "Document Count in $destination_storage_acc_name/destcontainer:$scontainer_object_count"
         
-        ((counter++))
+        counter=$((counter+1))
         previous_db_count="$new_db_count"
         previous_container_count="$new_container_count"
 
