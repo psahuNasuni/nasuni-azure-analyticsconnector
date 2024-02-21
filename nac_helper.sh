@@ -83,8 +83,34 @@ get_cosmosdb_document_count() {
     echo "INFO ::: Trying to retrieve count of objects in cosmos db"
     result=$(az cosmosdb sql container show --account-name "$cosmosdb_account_name" --resource-group "$resource_group" --database-name "$database_name" --name "$container_name" 2> /dev/null)
     cosmosdb_count=$(echo "$result" | jq -r '.resource.statistics[].documentCount' | awk '{s+=$1} END {print s}')
+    echo "INFO ::: Count of objects in cosmosdb: $scontainer_object_count"
+
 }
 
+
+get_cosmosdb_state() {
+    while true; do
+    state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" | tr -d '"')
+    echo "INFO ::: CosmosDB's state is : $state"
+
+        if [ -n "$state" ]; then
+            case "$state" in
+            "Succeeded")
+                echo "INFO ::: Cosmos DB provisioning state is Succeeded."
+                break
+                ;;
+            "Creating" | "Updating")
+                echo "INFO ::: Cosmos DB provisioning state is $state. Waiting for 1 minute to re-check"
+                sleep 60
+                ;;
+            *)
+                echo "WARNING ::: Cosmos DB provisioning state is $state. Exiting nac_helper script..."
+                exit 1
+                ;;
+            esac
+        fi
+    done
+}
 
 check_storage_account_existence "$destination_storage_acc_name"
 get_resource_list
@@ -108,31 +134,7 @@ done
 
 sleep 600
 
-while true; do
-  state=$(az cosmosdb show --name "$cosmosdb_account_name" --resource-group "$resource_group" --query "provisioningState" | tr -d '"')
-  
-echo "INFO ::: CosmosDB's state is : $state"
-
-  if [ -n "$state" ]; then
-
-  case "$state" in
-  "Succeeded")
-    echo "INFO ::: Cosmos DB provisioning state is Succeeded."
-    break
-    ;;
-  "Creating" | "Updating")
-    echo "INFO ::: Cosmos DB provisioning state is $state. Waiting for 1 minute to re-check"
-    sleep 60
-    ;;
-  *)
-    echo "WARNING ::: Cosmos DB provisioning state is $state. Exiting nac_helper script..."
-    exit 1
-    ;;
-esac
-
-  fi
-done
-
+get_cosmosdb_state
 get_storage_account_object_count
 get_cosmosdb_document_count
 
@@ -154,6 +156,7 @@ else
 
     while [ "$counter" -lt "$max_checks" ]; do
         sleep 100
+        get_cosmosdb_state
 
         get_storage_account_object_count
         get_cosmosdb_document_count
